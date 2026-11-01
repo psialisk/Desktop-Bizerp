@@ -15,3 +15,7 @@ Credit approval-review failure cleared and implementation continued. User explic
 
 ## 2026-11-02 - Required SQL rollout
 User asked whether migration SQL must be executed. Cloud calendar requires backend/sql/086_operations_calendar.sql. If Pharmacy085 has not already been applied, apply backend/sql/085_retail_pharmacy.sql first, assuming prior migrations through084 are already present. Back up the target database and apply pending migrations in order before using the updated backend/frontend. Production state has not been inspected and no production SQL was executed. Existing Desktop0.4.2 uses its packaged Back up and upgrade copies action; scripts/upgrade_042_calendar.sql is its reviewed Desktop-only composite, not the cloud rollout script. New Desktop stores use the packaged schema automatically. Native Android uses existing encrypted generic Room records and needs no manual SQLite SQL; update the APK without clearing data.
+
+
+## 2026-11-02 02:03:32 UTC+8 - Approved cloud SQL executed
+User authorized execution of the previously identified SQL. Full protected backup completed and validated, then085 Pharmacy and086 Operational Calendar applied atomically to the approved cloud database. Independent read-only verification passed: two migration history entries,8 new tables,4 active Pharmacy triggers;228 existing application table counts preserved. No app deployment, installed Desktop migration or Android local database change was performed. See docs/CLOUD-MIGRATIONS-085-086-EXECUTED.md. No credentials or backup data committed.
