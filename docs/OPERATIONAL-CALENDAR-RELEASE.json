@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-02",
+  "desktopRuntimePackages": [
+    "auto-repair",
+    "food-beverage",
+    "laundry",
+    "retail-pharmacy",
+    "retail-store",
+    "salon",
+    "services-contracting",
+    "water-refilling"
+  ],
+  "passed": 8,
+  "failedAssertions": 0,
+  "note": "Windows temporary-folder cleanup lock after first four assertions was handled by retry/retention; remaining package assertions passed separately. No cloud network or installed profiles used.",
+  "android": {
+    "version": "0.7.1-dev",
+    "versionCode": 11,
+    "jvmTests": 42,
+    "sha256": "6daa89c32adc3dc19060960ddde0e83a6bc836b9ae92bf3ac330da52dfc567d2"
+  },
+  "frontendLocalRoutes": 198,
+  "productionDeployment": false
+}

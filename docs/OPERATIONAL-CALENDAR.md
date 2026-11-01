@@ -28,3 +28,29 @@ Independent review found posted-balance and partially-completed queue defects; r
 ## Next features and rollout gate
 Other sub-specializations follow only after the priority automated platform gate. Keep source-backed dates: Salon appointments, Laundry promises, service visits; missing Food pickup/Auto handover promises stay explicit tasks or unscheduled. Store variants reuse the General Retail calendar, expiry and manual campaign/count tasks. Native local sources must exist before claiming local parity for specialized operational books.
 Resource capacity/conflict booking, staff assignment/branch filters, week/hour planner, controlled source rescheduling, recurring-task exceptions and OS push are subsequent work. Current task edits are not source-document rescheduling or resource reservations.
+
+
+## Specialist follow-up implemented 2026-11-02
+After the priority cloud/Desktop/Android checkpoint, added Salon appointment starts, Laundry promised releases, Services site visits and Auto/Trades work windows from their typed sources. Food pickups have no recorded promise date, so waiting pickups remain unscheduled until collected/cancelled, including after kitchen served status. Bookstore, clothing, furniture, grocery, hardware and toy-store variants inherit the General Retail delivery/expiry/task calendar; no rental/alteration/clinical workflow is fabricated.
+
+Native 0.7.1-dev/code11 adds a cloud-calendar-only Business mode for compatible Salon/Laundry/Food/Auto/Services foundations. It does not enable native specialist checkout or create local service books. These source actions use Cloud Platform; native device-local activation/books remain the supported Retail/Water/Pharmacy workflows. Native terminal filtering includes no_show, matching server rules.
+
+Latest Android artifact: D:/Business ERP/BusinessERP-Android-0.7.1-dev-Operational-Calendar.apk
+SHA256: 6daa89c32adc3dc19060960ddde0e83a6bc836b9ae92bf3ac330da52dfc567d2
+42 JVM tests pass, APK/instrumentation assembly and lint pass, original development certificate retained. No attached Android device; no physical UI/printer/instrumentation execution claimed. Earlier 0.7.0 artifact remains retained.
+
+All specialist API source/date/status tests pass, including served-but-waiting Food pickups, no_show terminal filtering and property isolation. Legacy compatible foundation reads derive the basic calendar without changing stored rows or signed grants. Finance balances reuse authoritative posted-balance SQL. Historical Water/071, customer-account specialist, specialist lifecycle, activation, pricing and retail regressions pass. One old Water test incorrectly expected reference identity despite pre-existing customer-account derivation; reproduced that failure on pre-calendar d2c6231f and updated the test to assert immutable inputs and no Fleet widening instead.
+
+Cloud and standalone Desktop production builds/preflights pass; 198 loopback page/asset checks pass. Staff/industry handbooks now explain the calendar and boundaries. Desktop original-schema preservation and Electron sandbox/context-isolation startup smoke passed. Final all-package runtime sweep is recorded in calendar-desktop-all-runtime.log.
+
+Desktop repository: https://github.com/psialisk/Desktop-Bizerp, branch feature/retail-operational-calendar. Source contains a reproducible, hash-verified installer recovery script and build instructions; runtime dependencies, real profiles and private keys stay outside Git. User provided this remote explicitly. All four repositories use the same feature branch; no main merge or production deployment.
+
+## Explicit scope decisions
+- Keep Desktop purchasedVersion0.4.2 so existing exact-version activation remains valid; cost: this is a development portable update, not a newly signed installer or new paid-version offer.
+- Calendar derives basic source access from existing licensed Retail-family capabilities; cost: existing contracts are not rewritten and source-specific permission guards still apply.
+- Other native specialists use cloud source calendars; cost: there are no new offline Salon/Laundry/Food/Auto/Services books or specialist checkout.
+- Resource/capacity reservations, staff/branch assignment filters, hour/week planning, recurring exceptions, source-document drag/reschedule and OS push remain outside this initial calendar release. Explicit operational task rescheduling is delivered; it is not a resource booking engine.
+
+Review: both priority findings (posted balances, partially_completed) and both specialist findings (served Food queue, no_show status) reproduced with failing tests and fixed. No important review findings left unresolved. No installed profile or production records were modified.
+
+Final Desktop runtime result:8/8 packages passed (Retail, Water, Pharmacy, Salon, Laundry, Food, Auto and Services), with real private Postgres/Nest/Next owner login, task retry/feed and page shell assertions. Windows locked one synthetic temporary fixture during cleanup; the harness now retries or retains that fixture and remaining runtime assertions passed. Final machine-readable evidence: docs/OPERATIONAL-CALENDAR-RELEASE.json. No functional runtime assertions failed.

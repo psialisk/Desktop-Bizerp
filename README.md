@@ -1,6 +1,6 @@
 # Business ERP Desktop - recovered development source
 
-Recovered Electron 0.4.2 source; branch feature/retail-operational-calendar. No GitHub remote yet. See RECOVERY.md for original installer provenance.
+Recovered Electron 0.4.2 source; branch feature/retail-operational-calendar. GitHub remote: https://github.com/psialisk/Desktop-Bizerp. See RECOVERY.md for original installer provenance.
 
 ## Calendar build
 1. Build D:/GitHub/bizerp.gnj/backend (`npm run build`).
@@ -11,3 +11,6 @@ Recovered Electron 0.4.2 source; branch feature/retail-operational-calendar. No 
 The development package keeps purchasedVersion 0.4.2 so existing exact-version activation checks remain effective. It does not relax signature, issuer, machine, business, revision, expiry or capacity checks. Cloud/Desktop books remain separate. Pharmacy paid Desktop enrollment is still excluded from cloud commerce until its paid offering is explicitly reviewed; this source includes the local workflows for compatible development/trial testing.
 
 The recovered installer omitted the original installer recipe, tests and Git history. The new build is a portable development folder, not a newly signed production installer. Existing issuer maps remain unchanged. Never commit private keys, credentials, bundle/, artifacts/ or local profiles.
+
+## Restore the runtime dependency bundle on another machine
+Retain the original reviewed installer outside Git. With Python and 7-Zip installed, use `python scripts/recover-installer.py --installer <original-exe> --seven-zip <7z.exe> --output <empty-recovery-folder>`. This verifies the recorded installer SHA256, unpacks runtime dependencies and original source without launching the installer, and refuses to overwrite a populated recovery directory. Pass the recovered application directory to `scripts/build-calendar.ps1 -RecoveredApplication <path>` along with the built shared Backend/Frontend checkouts. Runtime binaries and real local profiles are never source-controlled.
