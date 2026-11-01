@@ -19,3 +19,7 @@ User asked whether migration SQL must be executed. Cloud calendar requires backe
 
 ## 2026-11-02 02:03:32 UTC+8 - Approved cloud SQL executed
 User authorized execution of the previously identified SQL. Full protected backup completed and validated, then085 Pharmacy and086 Operational Calendar applied atomically to the approved cloud database. Independent read-only verification passed: two migration history entries,8 new tables,4 active Pharmacy triggers;228 existing application table counts preserved. No app deployment, installed Desktop migration or Android local database change was performed. See docs/CLOUD-MIGRATIONS-085-086-EXECUTED.md. No credentials or backup data committed.
+
+
+## 2026-11-02 - Boarding House calendar mockup only
+User requested an operational calendar mockup for Boarding House and explicitly prohibited code updates. Generated a green/white desktop month-calendar and Android agenda concept with fictional demo data, rent due/source invoices, move-ins/source leases, maintenance/source work orders and lead follow-ups. Week/Agenda controls and mobile layout are proposed design, not deployed capability. Preview and exact prompt: docs/mockups/BOARDING-HOUSE-CALENDAR-v1.md; image is stored in the Desktop repository and D:/Business ERP/Mockups. No application code, migration or production data changes.
