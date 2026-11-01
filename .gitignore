@@ -1,0 +1,7 @@
+bundle/
+artifacts/
+node_modules/
+*.log
+.env*
+*.pem
+*.key

@@ -1,0 +1,11 @@
+{
+  "name": "business-erp-desktop",
+  "version": "0.4.2",
+  "private": true,
+  "description": "Offline Business ERP with setup loading screens",
+  "author": "GNJ Business ERP",
+  "main": "src/main.cjs",
+  "dependencies": {},
+  "commercialLicensing": true,
+  "fullErp": true
+}

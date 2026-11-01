@@ -1,0 +1,3 @@
+const {contextBridge,ipcRenderer}=require('electron');
+contextBridge.exposeInMainWorld('businessErpLocalLicense',Object.freeze({status:()=>ipcRenderer.invoke('local-license:status'),open:()=>ipcRenderer.invoke('local-license:open'),exportRequest:()=>ipcRenderer.invoke('local-license:export')}));
+contextBridge.exposeInMainWorld('receiptDesktop',Object.freeze({bindSession:id=>ipcRenderer.invoke('receipt:bind',id),printers:()=>ipcRenderer.invoke('receipt:printers'),printerSettings:()=>ipcRenderer.invoke('receipt:settings'),savePrinterSettings:value=>ipcRenderer.invoke('receipt:save',value),testPrinter:value=>ipcRenderer.invoke('receipt:test',value),printReceipt:value=>ipcRenderer.invoke('receipt:print',value)}));

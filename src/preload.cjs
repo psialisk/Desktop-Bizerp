@@ -1,0 +1,7 @@
+const {contextBridge,ipcRenderer}=require('electron');
+contextBridge.exposeInMainWorld('storeDesktop',Object.freeze({
+ status:()=>ipcRenderer.invoke('desktop:status'),login:value=>ipcRenderer.invoke('desktop:login',value),openWindow:kind=>ipcRenderer.invoke('desktop:aux',kind),copy:text=>ipcRenderer.invoke('desktop:copy',text),
+ clearWelcome:()=>ipcRenderer.invoke('desktop:welcome:clear'),saveCredentials:()=>ipcRenderer.invoke('desktop:credentials:save'),openCredentials:()=>ipcRenderer.invoke('desktop:credentials:open'),recoveryStatus:()=>ipcRenderer.invoke('desktop:recovery:status'),resetOwner:value=>ipcRenderer.invoke('desktop:recovery:reset',value),setup:value=>ipcRenderer.invoke('desktop:setup',value),rebuildCloudSnapshot:()=>ipcRenderer.invoke('desktop:cloud:rebuild'),licenseExport:()=>ipcRenderer.invoke('desktop:license:export'),licenseRequest:()=>ipcRenderer.invoke('desktop:license:request'),licensePreview:text=>ipcRenderer.invoke('desktop:license:preview',text),licenseApply:text=>ipcRenderer.invoke('desktop:license:apply',text),switchMode:mode=>ipcRenderer.invoke('desktop:mode',mode),backup:()=>ipcRenderer.invoke('desktop:backup'),restore:()=>ipcRenderer.invoke('desktop:restore'),upgrade:()=>ipcRenderer.invoke('desktop:upgrade'),restart:()=>ipcRenderer.invoke('desktop:restart'),
+ onStatus:callback=>ipcRenderer.on('desktop:update',(_event,value)=>callback(value)),onReturn:callback=>ipcRenderer.on('desktop:return',(_event,value)=>callback(value))
+}));
+
