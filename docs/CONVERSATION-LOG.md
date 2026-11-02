@@ -27,3 +27,7 @@ User requested an operational calendar mockup for Boarding House and explicitly 
 
 ## 2026-11-02 — Calendar correction and login reconciliation
 User requested Boarding House-style Retail calendar, persisted dated events, three-day reminders and backend reconciliation at every login, then said proceed. Implemented cloud/shared Desktop and native corrections on feature/retail-operational-calendar. Added migration087 (not applied to production), authorized source projection, stable deduplicated reminder lifecycle, login/read/background refresh and batched writes; retained local/cloud book separation. Tests/review and deployment boundaries: docs/OPERATIONAL-CALENDAR-RECONCILIATION.md. No credentials logged.
+
+
+## 2026-11-02 — Retail-family roles and authorization analysis only
+User requested Philippine role/staff/authorization comparison, pharmacist equivalents, Water checker/manager roles, pros/cons and conclusion; explicitly no code updates. Reviewed current sources and official Philippine/vendor references. Recommendation: shared action-level authorization with editable job-role presets, separately verified qualifications and scoped assignments; no new foundation per job title. Identified fixed-role/custom-role conflicts, Water custody checker gap and owner-only native local identity. Full report: docs/RETAIL-STAFF-AUTHORIZATION-ANALYSIS-2026-11-02.md. Application code, schema, configuration and deployment unchanged.
