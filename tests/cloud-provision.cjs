@@ -24,7 +24,7 @@ assert.equal((await c.query('SELECT count(*)::int AS n FROM retail_orders')).row
 await require('../src/cloud-staff.cjs').applyRoster(rt,sign('GNJLR1',{purpose:'roster',users:[{id:userId,email:staff.email,role:'staff',status:'active',assigned:true,permissions:staff.permissions,credentialVersion:3,pharmacist:null}]}));
 assert.equal((await c.query('SELECT revoked FROM desktop_cloud_staff WHERE user_id=$1',[userId])).rows[0].revoked,true);
 assert.equal((await c.query('SELECT active FROM retail_pharmacists WHERE user_id=$1',[userId])).rows[0].active,false);
-assert.equal((await c.query('SELECT count(*)::int AS n FROM users')).rows[0].n,2);
+assert.equal((await c.query('SELECT count(*)::int AS n FROM users')).rows[0].n,2);assert.equal((await c.query('SELECT count(*)::int AS n FROM erp_employee_links')).rows[0].n,0,'No default-zero wage link may be invented');
 console.log('PASS cloud-bound PGlite provisioning: exact IDs, signed limits, credential verifier, staff permissions, schedules, verified pharmacist, no financial history');
 }finally{global.fetch=originalFetch;await db.close();}})().catch(e=>{console.error(e);process.exitCode=1});
 
