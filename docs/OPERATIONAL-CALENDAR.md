@@ -62,3 +62,7 @@ User asked whether migration SQL must be executed. Cloud calendar requires backe
 
 ## 2026-11-02 02:03:32 UTC+8 - Approved cloud SQL executed
 User authorized execution of the previously identified SQL. Full protected backup completed and validated, then085 Pharmacy and086 Operational Calendar applied atomically to the approved cloud database. Independent read-only verification passed: two migration history entries,8 new tables,4 active Pharmacy triggers;228 existing application table counts preserved. No app deployment, installed Desktop migration or Android local database change was performed. See docs/CLOUD-MIGRATIONS-085-086-EXECUTED.md. No credentials or backup data committed.
+
+
+## 2026-11-02 — Latest calendar correction
+The former count-only UI and on-demand-only behavior are superseded. See [Operational calendar alignment and reconciliation](OPERATIONAL-CALENDAR-RECONCILIATION.md) for42-day Boarding House layout, persisted source dates, three-day reminders, login reconciliation, Android0.7.2, Desktop upgrade paths and required new cloud SQL087. Earlier release/test/artifact entries above are historical.

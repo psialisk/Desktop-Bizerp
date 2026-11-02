@@ -23,14 +23,16 @@ Copy-Tree "$Frontend\.next-desktop\static" "$runtime\frontend\.next-desktop\stat
 Copy-Tree "$Frontend\public" "$runtime\frontend\public"
 Copy-Item "$repo\scripts\schema_calendar.sql" "$runtime\schema.sql"
 New-Item -ItemType Directory -Path "$runtime\migrations" -Force | Out-Null
-Copy-Item "$repo\scripts\upgrade_042_calendar.sql" "$runtime\migrations\086_operations_calendar.sql"
+Copy-Item "$repo\scripts\upgrade_042_calendar.sql" "$runtime\migrations\087_from_042_calendar.sql"
+Copy-Item "$repo\scripts\087_calendar_reconciliation.sql" "$runtime\migrations\087_calendar_reconciliation.sql"
 $old=Get-Content "$RecoveredApplication\resources\runtime\manifest.json" -Raw | ConvertFrom-Json
 $oldHash=$old.schemaHash
 $old.schemaHash=(Get-FileHash "$runtime\schema.sql" -Algorithm SHA256).Hash.ToLowerInvariant()
 $old.sharedBackendHash=(Get-FileHash "$runtime\backend\dist\main.js" -Algorithm SHA256).Hash.ToLowerInvariant()
 $old.builtAt=[DateTime]::UtcNow.ToString('o')
-$old | Add-Member -NotePropertyName calendarBuild -NotePropertyValue '2026-11-01-development' -Force
+$old | Add-Member -NotePropertyName calendarBuild -NotePropertyValue '2026-11-02-reconciliation-development' -Force
 # Keep purchasedVersion 0.4.2: existing activation checks require exact version, no licensing bypass.
-$old.upgrades=@(@{fromVersion='0.4.2';fromHash=$oldHash;toHash=$old.schemaHash;file='migrations/086_operations_calendar.sql';migrationHash=(Get-FileHash "$runtime\migrations\086_operations_calendar.sql" -Algorithm SHA256).Hash.ToLowerInvariant()})
+$old.upgrades=@(@{fromVersion='0.4.2';fromHash=$oldHash;toHash=$old.schemaHash;file='migrations/087_from_042_calendar.sql';migrationHash=(Get-FileHash "$runtime\migrations\087_from_042_calendar.sql" -Algorithm SHA256).Hash.ToLowerInvariant()})
+$old.upgrades+=@{fromVersion='0.4.2';fromHash='1eec1ae24e6164ab90c7d6940a8eff36711e967196a29575a70a358bb7890aea';toHash=$old.schemaHash;file='migrations/087_calendar_reconciliation.sql';migrationHash=(Get-FileHash "$runtime\migrations\087_calendar_reconciliation.sql" -Algorithm SHA256).Hash.ToLowerInvariant()}
 [IO.File]::WriteAllText("$runtime\manifest.json",($old|ConvertTo-Json -Depth 20),[Text.UTF8Encoding]::new($false))
 Write-Output "Built portable development folder: $output"

@@ -1,0 +1,52 @@
+{
+  "date": "2026-11-02",
+  "branch": "feature/retail-operational-calendar",
+  "cloud": {
+    "migration": "087_calendar_reconciliation.sql",
+    "appliedToProduction": false,
+    "applicationDeployed": false,
+    "backendBuild": true,
+    "calendarAndReminderRegression": true,
+    "validAndInvalidLoginHandlers": true,
+    "legacySqlRefreshIntegration": true,
+    "notificationsPharmacyRetailPosRegressions": true
+  },
+  "frontend": {
+    "cloudBuild": true,
+    "desktopStandaloneBuild": true,
+    "actualCalendarComponentRender": true,
+    "localHttpDestinations": 198,
+    "failedHttpDestinations": 0
+  },
+  "android": {
+    "version": "0.7.2-dev",
+    "versionCode": 12,
+    "jvmTests": 44,
+    "failures": 0,
+    "assembleDebug": true,
+    "assembleDebugAndroidTest": true,
+    "lintDebug": true,
+    "sha256": "ad1d9f58fb61672bd1ebcf53e813050f09f1529b43b908122600287825522e1e",
+    "certificateSha256": "a0ed46563ea98e32c31f74a77cac6d972c06e8f457c788993591205c6413311d",
+    "attachedDevice": false,
+    "instrumentationExecuted": false
+  },
+  "desktop": {
+    "originalSchemaPreservation": true,
+    "priorityRuntimePackages": [
+      "retail-store",
+      "water-refilling",
+      "retail-pharmacy"
+    ],
+    "priorityRuntimePassed": 3,
+    "actualInboxAndRepeatLoginDeduplication": true,
+    "installedProfileModified": false,
+    "signedInstallerGenerated": false
+  },
+  "review": {
+    "importantFindings": 3,
+    "remainingCritical": 0,
+    "remainingImportant": 0,
+    "freshFinalReview": true
+  }
+}

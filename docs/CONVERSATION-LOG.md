@@ -23,3 +23,7 @@ User authorized execution of the previously identified SQL. Full protected backu
 
 ## 2026-11-02 - Boarding House calendar mockup only
 User requested an operational calendar mockup for Boarding House and explicitly prohibited code updates. Generated a green/white desktop month-calendar and Android agenda concept with fictional demo data, rent due/source invoices, move-ins/source leases, maintenance/source work orders and lead follow-ups. Week/Agenda controls and mobile layout are proposed design, not deployed capability. Preview and exact prompt: docs/mockups/BOARDING-HOUSE-CALENDAR-v1.md; image is stored in the Desktop repository and D:/Business ERP/Mockups. No application code, migration or production data changes.
+
+
+## 2026-11-02 — Calendar correction and login reconciliation
+User requested Boarding House-style Retail calendar, persisted dated events, three-day reminders and backend reconciliation at every login, then said proceed. Implemented cloud/shared Desktop and native corrections on feature/retail-operational-calendar. Added migration087 (not applied to production), authorized source projection, stable deduplicated reminder lifecycle, login/read/background refresh and batched writes; retained local/cloud book separation. Tests/review and deployment boundaries: docs/OPERATIONAL-CALENDAR-RECONCILIATION.md. No credentials logged.

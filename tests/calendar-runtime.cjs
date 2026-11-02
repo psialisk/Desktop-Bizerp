@@ -14,6 +14,8 @@ const available=['retail-store','water-refilling','retail-pharmacy','salon','lau
  const before=await call('/operations-calendar?month='+day.slice(0,7),'GET',null,token);assert(before.canEdit);const body={requestKey:randomUUID(),title:'Synthetic stock count',category:'stock-count',dueOn:day,priority:'normal',note:'Fixture only'};
  const task=await call('/operations-calendar/tasks','POST',body,token);assert.equal((await call('/operations-calendar/tasks','POST',body,token)).id,task.id);
  assert((await call('/operations-calendar?month='+day.slice(0,7),'GET',null,token)).events.some(e=>e.id==='task:'+task.id));
+ const inbox=await call('/notifications/inbox?view=action','GET',null,token);assert(inbox.rows.some(n=>n.operation?.alert==='calendar-three-day'&&n.operation.sourceId===task.id&&!n.resolvedAt),'Desktop inbox must retain the calendar action');
+ await call('/auth/staff/login','POST',{email,password});const again=await call('/notifications/inbox?view=action','GET',null,token);assert.equal(again.rows.filter(n=>n.operation?.alert==='calendar-three-day'&&n.operation.sourceId===task.id).length,1,'Repeated owner login must not duplicate the reminder');
  const page=await fetch('http://127.0.0.1:38120/dashboard/operational-calendar');assert.equal(page.status,200);
  successful=true;console.log('PASS Desktop offline '+packageId+': private Postgres/Nest/Next, owner login, calendar task/retry/feed and page shell');
  }finally{await rt.stop();
