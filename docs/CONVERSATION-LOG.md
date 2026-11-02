@@ -31,3 +31,8 @@ User requested Boarding House-style Retail calendar, persisted dated events, thr
 
 ## 2026-11-02 — Retail-family roles and authorization analysis only
 User requested Philippine role/staff/authorization comparison, pharmacist equivalents, Water checker/manager roles, pros/cons and conclusion; explicitly no code updates. Reviewed current sources and official Philippine/vendor references. Recommendation: shared action-level authorization with editable job-role presets, separately verified qualifications and scoped assignments; no new foundation per job title. Identified fixed-role/custom-role conflicts, Water custody checker gap and owner-only native local identity. Full report: docs/RETAIL-STAFF-AUTHORIZATION-ANALYSIS-2026-11-02.md. Application code, schema, configuration and deployment unchanged.
+
+
+## 2026-11-02 — Leave register returns to Dashboard
+User screenshot showed the Business POS cash-session modal linking Leave register to /business-login. User requested Dashboard instead. Changed only the shared frontend link in components/RetailStoreTools.tsx to /dashboard. Navigation does not clear authentication or submit/open/close a cash session. Existing POS session/navigation and foundation checks pass; frontend build and local HTTP verification recorded after completion. No backend/schema/native changes and no production deployment. Shared frontend source change will be inherited by a future Desktop build; packaged Desktop/APK not rebuilt for this web-link fix.
+Verification: frontend build/preflights, existing POS session/navigation and foundation checks passed;198 local HTTP destinations passed, Dashboard returned200. No live deployment or SQL required.
