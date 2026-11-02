@@ -52,6 +52,7 @@ class WorkspaceLogin{
    // The bootstrap page only establishes this isolated web origin; never receive credentials in a remote preload.
    await load(target.origin+'/business-login');if(new URL(wc.getURL()).origin!==target.origin)throw Error('Workspace server redirected to another address');
    const installationId=await wc.executeJavaScript(`(()=>{let id=localStorage.getItem('business_erp_pos_installation');if(!/^[a-f0-9-]{36}$/i.test(id||'')){id=${JSON.stringify(randomUUID())};localStorage.setItem('business_erp_pos_installation',id);}return id})()`);
+   if(local&&rt.v.cloudBinding)await require('./cloud-staff.cjs').prepareLogin(rt,input);
    const auth=await authenticate(target.api,{...input,workflow,installationId});entry.actor=auth.actor;
    if(new URL(wc.getURL()).origin!==target.origin)throw Error('Workspace address changed during sign-in');
    const key=input.kind==='owner'?'staff_token':input.kind==='customer'?'renter_token':'pos_token';

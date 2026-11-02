@@ -3,7 +3,7 @@ async function provision(bundle,client,input,mode){
  const q=async(s,p)=>(await client.query(s,p)).rows;
  const bcrypt=require(path.join(bundle,'backend/node_modules/bcrypt'));
  const {normalizeFoundation}=require(path.join(bundle,'backend/dist/modules/foundation/foundation.catalog'));
- const tenant=(mode==="live"&&input.localBusinessId)||randomUUID(),owner=randomUUID(),cashier=randomUUID(),role=randomUUID(),location=randomUUID();
+ const tenant=(mode==="live"&&input.localBusinessId)||randomUUID(),owner=(mode==="live"&&input.cloudOwnerId)||randomUUID(),cashier=randomUUID(),role=randomUUID(),location=randomUUID();
  const foundation=normalizeFoundation(input.foundation||{industryId:'retail',templateId:'retail',blocks:['contacts','staff','inventory','retail-sales','retail-accounting','retail-pos','water-custody','delivery-fleet','documents','financial-reports'],workflowIds:['water-desk'],packageFamilyId:'retail',specializationId:'water-refilling'});
  await q('BEGIN');try{
  await q("INSERT INTO tenants(id,name,slug,plan,contact_email) VALUES($1,$2,$3,'enterprise',$4)",[tenant,(mode==='training'?'TRAINING — ':'')+input.businessName,'desktop-'+tenant,input.email]);
