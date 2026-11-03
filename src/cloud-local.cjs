@@ -8,6 +8,7 @@ function verifyGrant(token,keys,binding,purpose,now=Date.now()){
  if(c.v!==1||c.platform!=='desktop'||!Number.isSafeInteger(c.issuedAt)||c.issuedAt>now+300000)throw Error('Invalid Desktop grant');
  for(const k of ['tenantId','ownerId','installationId','fingerprint','activationId'])if(!c[k]||(binding[k]!==undefined&&c[k]!==binding[k]))throw Error('Cloud identity mismatch: '+k);
  if(purpose==='owner'&&c.license&&(!c.license.platforms?.includes('desktop')||!Number.isSafeInteger(c.license.graceEndsAt)))throw Error('Invalid signed Desktop commercial policy');
+ if(purpose==='owner'&&c.license?.perpetual===true&&c.license.kind!=='paid')throw Error('Only a signed paid Desktop purchase can be perpetual');
  if(c.expiresAt!==null&&(!Number.isSafeInteger(c.expiresAt)||c.expiresAt<=now))throw Error('Cloud lease expired; reconnect online');
  if(purpose==='staff'){
   if(c.purpose!=='staff'||!['staff','manager'].includes(c.role)||!c.userId||c.passwordChangeRequired!==false||!Number.isSafeInteger(c.expiresAt)||c.expiresAt-c.issuedAt>7*86400000)throw Error('Invalid staff lease');

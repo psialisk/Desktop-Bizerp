@@ -16,7 +16,7 @@ function Copy-Tree([string]$From,[string]$To,[string[]]$Extra=@()){
  if($LASTEXITCODE -gt 7){throw "Copy failed: $From"}
 }
 # No installed profile, keys or local databases are included. No files are deleted by this script.
-Copy-Tree $RecoveredApplication $output @('/XF','app.asar','/XD',"$RecoveredApplication\resources\runtime\frontend","$RecoveredApplication\resources\runtime\backend\dist")
+Copy-Tree $RecoveredApplication $output @('/XF','app.asar','.env*','*.pem','*.key','/XD',"$RecoveredApplication\resources\runtime\frontend","$RecoveredApplication\resources\runtime\backend\dist")
 $app=Join-Path $output 'resources\app';Copy-Tree "$repo\src" "$app\src";Copy-Tree "$repo\ui" "$app\ui";Copy-Item "$repo\package.json" "$app\package.json"
 $runtime=Join-Path $output 'resources\runtime'
 # Runtime launcher loads service files here, separately from Electron sources.
