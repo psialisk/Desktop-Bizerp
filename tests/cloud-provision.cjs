@@ -18,6 +18,7 @@ const staff={purpose:'staff',userId,email:'pharmacist@fixture.invalid',fullName:
 global.fetch=async(url)=>({ok:true,text:async()=>JSON.stringify(url.endsWith('/auth/staff/login')?{accessToken:'cloud-token-never-used-locally',user:{tenantId}}:url.endsWith('/auth/staff/me')?{id:userId,role:'staff'}:{grant:token})});
 await prepareLogin(rt,{email:staff.email,password:'Synthetic-staff-password'});
 const u=(await c.query('SELECT * FROM users WHERE id=$1',[userId])).rows[0];assert.equal(u.tenant_id,tenantId);assert.equal(u.credential_version,2);assert.notEqual(u.password_hash,'Synthetic-staff-password');assert(await require(path.join(backend,'node_modules/bcrypt')).compare('Synthetic-staff-password',u.password_hash));
+assert.equal((await c.query('SELECT employee_id FROM team_employee_links WHERE tenant_id=$1 AND user_id=$2',[tenantId,userId])).rows[0].employee_id,employeeId);
 assert.equal((await c.query('SELECT count(*)::int AS n FROM employee_schedules WHERE employee_id=$1',[employeeId])).rows[0].n,1);
 assert.equal((await c.query('SELECT license_number FROM retail_pharmacists WHERE user_id=$1 AND active',[userId])).rows[0].license_number,'SYNTHETIC-VERIFIED');
 assert.equal((await c.query('SELECT count(*)::int AS n FROM retail_orders')).rows[0].n,0);
@@ -25,6 +26,7 @@ await require('../src/cloud-staff.cjs').applyRoster(rt,sign('GNJLR1',{purpose:'r
 assert.equal((await c.query('SELECT revoked FROM desktop_cloud_staff WHERE user_id=$1',[userId])).rows[0].revoked,true);
 assert.equal((await c.query('SELECT active FROM retail_pharmacists WHERE user_id=$1',[userId])).rows[0].active,false);
 assert.equal((await c.query('SELECT count(*)::int AS n FROM users')).rows[0].n,2);assert.equal((await c.query('SELECT count(*)::int AS n FROM erp_employee_links')).rows[0].n,0,'No default-zero wage link may be invented');
+const rosterOnly=crypto.randomUUID(),rosterEmployee=crypto.randomUUID();await require('../src/cloud-staff.cjs').applyRoster(rt,sign('GNJLR1',{purpose:'roster',users:[{id:rosterOnly,status:'inactive',assigned:false,employee:{id:rosterEmployee,fullName:'Unassigned signed starter',position:'Cashier',status:'draft',schedules:[]}}]}));assert.equal((await c.query('SELECT status FROM employees WHERE id=$1',[rosterEmployee])).rows[0].status,'draft');assert.equal((await c.query('SELECT count(*)::int AS n FROM users WHERE id=$1',[rosterOnly])).rows[0].n,0,'Roster must never create a usable local login');assert.equal((await c.query('SELECT count(*)::int AS n FROM erp_employee_links')).rows[0].n,0);
 console.log('PASS cloud-bound PGlite provisioning: exact IDs, signed limits, credential verifier, staff permissions, schedules, verified pharmacist, no financial history');
 }finally{global.fetch=originalFetch;await db.close();}})().catch(e=>{console.error(e);process.exitCode=1});
 

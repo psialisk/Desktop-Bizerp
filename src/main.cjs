@@ -33,6 +33,7 @@ if(!app.requestSingleInstanceLock()){app.quit();}else{
   runtime=new StoreRuntime({root,bundle,secrets,onStatus:s=>{message=s;update();}});
   login=new WorkspaceLogin({WebContentsView,control,workspaces,runtime:()=>runtime,cloudApi:runtime.manifest?.cloudApi,onReturn:choice=>{control.webContents.send('desktop:return',choice);update();}});
   printing=registerReceiptPrinting({ipcMain,BrowserWindow,dialog,workspaces,getRuntime:()=>runtime,root});
+  require('./cloud-team-bridge.cjs').registerCloudTeamBridge({ipcMain,shell:require('electron').shell,workspaces,getRuntime:()=>runtime,login});
   ipcMain.handle('desktop:status',event=>{trusted(event);return status();});
   ipcMain.handle('desktop:login',action(async input=>{if(input?.mode==='local'&&!initialized)throw Error('Local startup is unavailable: '+(startupError||message)+'. Network login remains available.');await login.login(input);return {signedIn:true};},{requiresLocal:false}));
   ipcMain.handle('desktop:aux',action(openAuxiliary,{requiresLocal:false}));

@@ -39,7 +39,7 @@ class WorkspaceLogin{
   const workflows=require(require('node:path').join(rt.bundle,'backend/dist/modules/foundation/catalog.json')).counterWorkflows.filter(w=>w.status==='ready');
   const workflow=workflows.find(w=>w.id===input.workflowId)||workflows.find(w=>w.id===(local&&rt.v.localBusiness?.packageId==='water-refilling'?'water-desk':'retail'));
   const partition=local?'persist:water-'+rt.mode+'-'+input.kind:'network-'+createHash('sha256').update(target.origin+'|'+input.kind).digest('hex').slice(0,24);
-  const view=new this.WebContentsView({webPreferences:{partition,...(local?{preload:require('node:path').join(__dirname,'workspace-preload.cjs')} :{}),nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true}});
+  const view=new this.WebContentsView({webPreferences:{partition,...(local?{preload:require('node:path').join(__dirname,'workspace-preload.cjs'),additionalArguments:rt.v.cloudBinding?['--desktop-cloud-managed-staff']:[]} :{}),nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true}});
   const wc=view.webContents,entry={view,webContents:wc,parentWindow:this.control,networkWorkspace:!local,kind:input.kind,mode:input.mode,origin:target.origin,api:target.api,
    ...(local?{desktopContext:{origin:target.origin,store:rt.v.databases[rt.mode],mode:rt.mode,kind:input.kind}}:{}),isDestroyed:()=>wc.isDestroyed(),destroy:()=>this.close(entry)};
   this.opening=entry;wc.session.setPermissionRequestHandler((_w,_p,done)=>done(false));wc.setWindowOpenHandler(()=>({action:'deny'}));
