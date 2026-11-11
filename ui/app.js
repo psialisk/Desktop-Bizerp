@@ -1,5 +1,5 @@
 const api=window.storeDesktop,$=id=>document.getElementById(id);
-const page=location.hash.slice(1)||'login';let operationLabel='Preparing local services…',current={},network=false,kind='owner',pending=false,workflowTouched=false,recovery=null,welcome=null,recoveryLoading=false;
+const page=location.hash.slice(1)||'login';let operationLabel='Preparing local services…',current={},network=false,localErpAddress=false,kind='owner',pending=false,workflowTouched=false,recovery=null,welcome=null,recoveryLoading=false;
 for(const id of ['login','create','license','tools','recovery'])$(id+'Page').hidden=id!==page;
 if(page!=='login')document.body.classList.add('aux');
 function errorFor(){return $(page==='login'?'error':page+'Error');}
@@ -14,7 +14,7 @@ function render(s){current=s;
  if(page==='login'){
   $('forgotPassword').hidden=network||kind!=='owner'||!s.configured;
   document.body.classList.toggle('network',network);iconText($('connectionBadge'),network?'globe2':'pc-display-horizontal',network?'NETWORK':s.mode==='training'?'LOCAL Â· TRAINING':'LOCAL Â· This computer');
-  $('localBusinessField').hidden=network;$('networkField').hidden=!network;$('networkUrl').disabled=!network;$('networkUrl').required=network;$('workflowField').hidden=kind!=='pos';
+  $('localBusinessField').hidden=network;$('networkField').hidden=false;$('networkUrl').disabled=busy;$('networkUrl').required=network;$('networkUrl').readOnly=!localErpAddress;$('networkUrl').placeholder=localErpAddress?'https://local-erp.example or http://192.168.1.20:3000':'https://bizerpsme.shop';$('localErpToggle').hidden=false;if(network&&!localErpAddress&&$('networkUrl').value!=='https://bizerpsme.shop')$('networkUrl').value='https://bizerpsme.shop';iconText($('localErpToggle'),localErpAddress?'cloud':'pc-display-horizontal',localErpAddress?'Use Business ERP cloud':'Connect Local ERP');$('workflowField').hidden=kind!=='pos';
   document.querySelector('[data-kind="customer"]').hidden=!network;
   for(const button of document.querySelectorAll('[data-kind]')){button.classList.toggle('selected',button.dataset.kind===kind);button.setAttribute('aria-pressed',String(button.dataset.kind===kind));}
   $('localBusiness').textContent=s.businessName||(s.configured?'Local business':'No local business created yet');
@@ -45,10 +45,11 @@ function render(s){current=s;
  if(page==='tools'){$('cloudStatus').textContent=s.cloud?.message||'Working fully offline. Business details register when the cloud service is reachable.';$('training').hidden=!s.trainingAvailable;}
 }
 async function perform(fn,label='Completing your request…'){if(pending||current.busy)return null;showError('');operationLabel=label;pending=true;render(current);try{return await fn();}catch(error){showError(String(error.message||'Operation failed').replace(/^Error invoking remote method '[^']+': (?:Error: )?/,''));return null;}finally{pending=false;try{render(await api.status());}catch(error){render({...current,busy:false});showError('Unable to refresh local status. '+String(error.message||'Please retry.'));}}}
-api.onStatus(render);api.onReturn(choice=>{network=choice.mode==='network';kind=choice.kind;$('password').value='';$('password').type='password';$('showPassword').textContent='Show';render(current);});
+api.onStatus(render);api.onReturn(choice=>{network=choice.mode==='network';localErpAddress=false;$('networkUrl').value='https://bizerpsme.shop';kind=choice.kind;$('password').value='';$('password').type='password';$('showPassword').textContent='Show';render(current);});
 for(const button of document.querySelectorAll('[data-kind]'))button.onclick=()=>{kind=button.dataset.kind;showError('');$('password').value='';render(current);};
 $('workflow').onchange=()=>{workflowTouched=true;};
-$('connectionToggle').onclick=()=>{network=!network;if(!network&&kind==='customer')kind='owner';$('password').value='';showError('');render(current);};
+$('connectionToggle').onclick=()=>{network=!network;localErpAddress=false;$('networkUrl').value='https://bizerpsme.shop';if(!network&&kind==='customer')kind='owner';$('password').value='';showError('');render(current);};
+$('localErpToggle').onclick=()=>{if(localErpAddress){localErpAddress=false;$('networkUrl').value='https://bizerpsme.shop';}else{network=true;localErpAddress=true;$('networkUrl').value='';}$('password').value='';showError('');render(current);if(localErpAddress)$('networkUrl').focus();};
 $('showPassword').onclick=()=>{const input=$('password');input.type=input.type==='password'?'text':'password';$('showPassword').textContent=input.type==='password'?'Show':'Hide';$('showPassword').setAttribute('aria-label',input.type==='password'?'Show password':'Hide password');};
 for(const button of document.querySelectorAll('.reveal'))button.onclick=()=>{const input=button.previousElementSibling;input.type=input.type==='password'?'text':'password';button.textContent=input.type==='password'?'Show':'Hide';};
 window.addEventListener('blur',()=>{for(const input of document.querySelectorAll('.password-field input')){input.type='password';input.nextElementSibling.textContent='Show';}});

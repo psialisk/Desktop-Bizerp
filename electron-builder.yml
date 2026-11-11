@@ -1,5 +1,6 @@
 appId: com.gnj.businesserp.desktop
 productName: Business ERP
+executableName: Business ERP Desktop
 electronVersion: 40.10.6
 directories:
   output: artifacts/installers

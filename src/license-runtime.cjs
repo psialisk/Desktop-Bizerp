@@ -45,7 +45,15 @@ async function applyLicense(rt,text){
 }
 async function setupLicense(rt,input){const local=await localLicense(rt);let status=await local.status();if(rt.manifest.fullErp&&!rt.v.offlineLicense?.token){const catalog=require(path.join(rt.bundle,'backend/dist/modules/package-commerce/catalog.json')),selected=catalog.packages.find(p=>p.id===input.packageId);if(!selected)throw Error('Choose an installed ERP package');const {packageFoundation}=require(path.join(rt.bundle,'backend/dist/common/package-foundation'));status=await local.startTrial(selected.id,packageFoundation(selected.id),selected.limits);}if(rt.manifest.commercialLicensing&&!status.claims&&!status.trial)throw Error('Paste a signed activation key before creating this store');if(!status.writable)throw Error(status.message);return status;}
 async function ensureFullBusiness(rt){
- if(!rt.manifest.fullErp||!rt.v.databases.live||rt.v.localBusiness)return;
- const c=await rt.client(rt.v.databases.live);try{const r=await c.query("SELECT t.name,u.full_name,u.email,f.specialization_id,f.template_id FROM tenants t JOIN users u ON u.tenant_id=t.id AND u.role='owner' JOIN tenant_foundations f ON f.tenant_id=t.id ORDER BY u.created_at LIMIT 1");if(!r.rows.length)throw Error('Existing local business needs owner recovery');const row=r.rows[0],catalog=require(path.join(rt.bundle,'backend/dist/modules/package-commerce/catalog.json')),packageId=catalog.packages.some(p=>p.id===row.specialization_id)?row.specialization_id:catalog.packages.some(p=>p.id===row.template_id)?row.template_id:'water-refilling';rt.v={...rt.v,localBusiness:{businessName:row.name,ownerName:row.full_name,ownerEmail:row.email,packageId}};await rt.secrets.save(rt.v);if(!rt.v.offlineLicense?.token){const status=await setupLicense(rt,{packageId});const tenant=await c.query('SELECT id FROM tenants');await applyDatabase(rt,c,tenant.rows[0].id,{kind:'local_trial',grants:status.grants,limits:status.limits,revision:1},'LOCAL-TRIAL');}}finally{await c.end();}
+ if(!rt.manifest.fullErp||!rt.v.databases.live)return;
+ const c=await rt.client(rt.v.databases.live);try{
+  const r=await c.query("SELECT t.id,t.name,u.full_name,u.email,f.specialization_id,f.template_id FROM tenants t JOIN users u ON u.tenant_id=t.id AND u.role='owner' JOIN tenant_foundations f ON f.tenant_id=t.id ORDER BY u.created_at LIMIT 1");
+  if(!r.rows.length)throw Error('Existing local business needs owner recovery');
+  const row=r.rows[0],catalog=require(path.join(rt.bundle,'backend/dist/modules/package-commerce/catalog.json'));
+  const packageId=[rt.v.localBusiness?.packageId,row.specialization_id,row.template_id].find(id=>catalog.packages.some(p=>p.id===id))||'water-refilling';
+  const localBusiness={...rt.v.localBusiness,businessName:rt.v.localBusiness?.businessName||row.name,ownerName:rt.v.localBusiness?.ownerName||row.full_name,ownerEmail:rt.v.localBusiness?.ownerEmail||row.email,packageId};
+  if(JSON.stringify(localBusiness)!==JSON.stringify(rt.v.localBusiness||{})){rt.v={...rt.v,localBusiness};await rt.secrets.save(rt.v);}
+  if(!rt.v.offlineLicense?.token){const status=await setupLicense(rt,{packageId});await applyDatabase(rt,c,row.id,{kind:'local_trial',grants:status.grants,limits:status.limits,revision:1},'LOCAL-TRIAL');}
+ }finally{await c.end();}
 }
 module.exports={localLicense,applyLicense,applyDatabase,publishLicense,setupLicense,ensureFullBusiness};
