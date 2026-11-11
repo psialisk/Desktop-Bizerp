@@ -1,0 +1,21 @@
+appId: com.gnj.businesserp.desktop
+productName: Business ERP
+electronVersion: 40.10.6
+directories:
+  output: artifacts/installers
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  signAndEditExecutable: false
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Business ERP
+  deleteAppDataOnUninstall: false
+  runAfterFinish: true
+  artifactName: BusinessERP-Desktop-${version}-Setup.${ext}
