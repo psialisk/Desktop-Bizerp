@@ -39,10 +39,14 @@ class WorkspaceLogin{
   const workflows=require(require('node:path').join(rt.bundle,'backend/dist/modules/foundation/catalog.json')).counterWorkflows.filter(w=>w.status==='ready');
   const workflow=workflows.find(w=>w.id===input.workflowId)||workflows.find(w=>w.id===(local&&rt.v.localBusiness?.packageId==='water-refilling'?'water-desk':'retail'));
   const partition=local?'persist:water-'+rt.mode+'-'+input.kind:'network-'+createHash('sha256').update(target.origin+'|'+input.kind).digest('hex').slice(0,24);
-  const view=new this.WebContentsView({webPreferences:{partition,...(local?{preload:require('node:path').join(__dirname,'workspace-preload.cjs')} :{}),nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true}});
+  const view=new this.WebContentsView({webPreferences:{partition,...(local?{preload:require('node:path').join(__dirname,'workspace-preload.cjs'),additionalArguments:rt.v.cloudBinding?['--desktop-cloud-managed-staff']:[]} :{}),nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true}});
   const wc=view.webContents,entry={view,webContents:wc,parentWindow:this.control,networkWorkspace:!local,kind:input.kind,mode:input.mode,origin:target.origin,api:target.api,
    ...(local?{desktopContext:{origin:target.origin,store:rt.v.databases[rt.mode],mode:rt.mode,kind:input.kind}}:{}),isDestroyed:()=>wc.isDestroyed(),destroy:()=>this.close(entry)};
-  this.opening=entry;wc.session.setPermissionRequestHandler((_w,_p,done)=>done(false));wc.setWindowOpenHandler(()=>({action:'deny'}));
+  this.opening=entry;
+  const cameraOriginAllowed=(requester,url,mediaType)=>{try{const origin=new URL(url).origin,host=new URL(origin).hostname;return local&&!entry.networkWorkspace&&requester===wc&&origin===target.origin&&['127.0.0.1','localhost','[::1]'].includes(host)&&mediaType==='video';}catch{return false;}};
+  wc.session.setPermissionCheckHandler((requester,permission,origin,details)=>permission==='media'&&cameraOriginAllowed(requester,details?.requestingUrl||origin,details?.mediaType));
+  wc.session.setPermissionRequestHandler((requester,permission,done,details)=>done(permission==='media'&&details?.mediaTypes?.includes('video')===true&&!details?.mediaTypes?.includes('audio')&&cameraOriginAllowed(requester,details.requestingUrl,'video')));
+  wc.setWindowOpenHandler(()=>({action:'deny'}));
   const guard=(event,url)=>{try{if(new URL(url).origin!==target.origin)event.preventDefault();}catch{event.preventDefault();}};
   wc.on('will-navigate',guard);wc.on('will-redirect',guard);
   if(local)wc.session.webRequest.onBeforeRequest((details,done)=>{let allow=false;try{const u=new URL(details.url);allow=u.origin===target.origin||['blob:','data:'].includes(u.protocol);}catch{}done({cancel:!allow});});
@@ -52,6 +56,7 @@ class WorkspaceLogin{
    // The bootstrap page only establishes this isolated web origin; never receive credentials in a remote preload.
    await load(target.origin+'/business-login');if(new URL(wc.getURL()).origin!==target.origin)throw Error('Workspace server redirected to another address');
    const installationId=await wc.executeJavaScript(`(()=>{let id=localStorage.getItem('business_erp_pos_installation');if(!/^[a-f0-9-]{36}$/i.test(id||'')){id=${JSON.stringify(randomUUID())};localStorage.setItem('business_erp_pos_installation',id);}return id})()`);
+   if(local&&rt.v.cloudBinding)await require('./cloud-staff.cjs').prepareLogin(rt,input);
    const auth=await authenticate(target.api,{...input,workflow,installationId});entry.actor=auth.actor;
    if(new URL(wc.getURL()).origin!==target.origin)throw Error('Workspace address changed during sign-in');
    const key=input.kind==='owner'?'staff_token':input.kind==='customer'?'renter_token':'pos_token';

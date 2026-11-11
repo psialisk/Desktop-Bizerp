@@ -1,0 +1,38 @@
+{
+  "date": "2026-11-03",
+  "android": {
+    "path": "D:/Business ERP/BusinessERP-Android-0.8.0-dev-Cloud-Local-Staff.apk",
+    "sha256": "79220CA1AA94EA0745C7F13F331E20FE20012B8722AE51555CB2C49496912840",
+    "version": "0.8.0-dev",
+    "versionCode": 13,
+    "tests": 49,
+    "failures": 0,
+    "lint": "passed",
+    "deviceAcceptance": "pending - no device attached",
+    "commit": "146cbbb"
+  },
+  "desktop": {
+    "path": "D:/Business ERP/Desktop-Development/BusinessERP-Desktop/artifacts/BusinessERP-Desktop-0.4.2-Cloud-Local-Staff/Business ERP Desktop.exe",
+    "sha256": "92FB72E30296129CDA2EC93E8061B761F5E3A02E420C3751CEA046340371A1CC",
+    "kind": "unsigned portable development folder; keep entire folder",
+    "unitTests": 8,
+    "schemaProvisioning": "passed",
+    "packagedRuntimeSmoke": "passed with synthetic cloud and fresh local PostgreSQL/Nest/Next profile",
+    "legacySchemaPreservation": "passed",
+    "commit": "feeaddf"
+  },
+  "backend": {
+    "commit": "896e037e",
+    "staffActivationSuite": "passed",
+    "androidRegressionSuite": "passed",
+    "productionSql": "not executed",
+    "productionDeploy": "not performed"
+  },
+  "frontend": {
+    "commit": "261b7b6",
+    "renderedDevicePanels": "passed",
+    "typecheck": "passed",
+    "desktopProductionBuild": "passed"
+  },
+  "branch": "feature/cloud-local-staff"
+}
