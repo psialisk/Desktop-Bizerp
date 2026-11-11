@@ -12,5 +12,8 @@ The development package keeps purchasedVersion 0.4.2 so existing exact-version a
 
 The recovered installer omitted the original installer recipe, tests and Git history. The new build is a portable development folder, not a newly signed production installer. Existing issuer maps remain unchanged. Never commit private keys, credentials, bundle/, artifacts/ or local profiles.
 
+## Build a Windows setup installer
+Run `scripts/make-installer.ps1` after creating a complete portable build. It packages the whole Electron app folder (including `icudtl.dat`, locales, Chromium resources and the ERP runtime) as an assisted per-user NSIS installer. It retains the user's `%APPDATA%\Business ERP Desktop` data on uninstall. The generated installer is unsigned and requires a verified code-signing certificate before public distribution.
+
 ## Restore the runtime dependency bundle on another machine
 Retain the original reviewed installer outside Git. With Python and 7-Zip installed, use `python scripts/recover-installer.py --installer <original-exe> --seven-zip <7z.exe> --output <empty-recovery-folder>`. This verifies the recorded installer SHA256, unpacks runtime dependencies and original source without launching the installer, and refuses to overwrite a populated recovery directory. Pass the recovered application directory to `scripts/build-calendar.ps1 -RecoveredApplication <path>` along with the built shared Backend/Frontend checkouts. Runtime binaries and real local profiles are never source-controlled.
