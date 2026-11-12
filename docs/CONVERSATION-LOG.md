@@ -61,3 +61,11 @@ User reported Setup Finish opening a Missing Shortcut dialog for `Business ERP.e
 - Partial: added Android cloud signup from the portal chooser, live industry/package selection from the public catalog, owner registration through the existing signup endpoint, and a one-time generated password summary that continues to Business sign-in. The access end date shown comes from the API response.
 - Desktop sign-in keeps `https://bizerpsme.shop` read-only for standard cloud access and offers a right-side **Connect Local ERP** toggle that makes the address editable for a local/LAN ERP. Existing local-PC sign-in and local-business creation remain available.
 - Android Kotlin compilation succeeded with `:app:compileDebugKotlin`. No tests, APK packaging, device signup, live account creation, Desktop package/build, or deployment was performed. Full device/API acceptance remains pending.
+
+## 2026-11-12 — Android and Desktop local package checkpoint
+
+`assembleDebug` succeeded (UP-TO-DATE). Copied the verified APK to `artifacts/cloud-first-signup-20261112/Business ERP.apk` (23,371,046 bytes; SHA-256 `26BC035611761AA2C17951D9C2FFD1ED38A9AA1792C53289CF97545ACF1139B3`). Package metadata is `com.gnj.bizerp.android.dev`, version `0.13.0-dev`, target SDK 36; APK signature verifies with Android Debug certificate. This is a development build, not the selected production ID/signing identity. No Android tests or connected-device acceptance were run.
+
+## Desktop package checkpoint — 2026-11-12
+
+Built the shared backend and Desktop-specific Next standalone bundle, assembled portable folder `Desktop-Development/BusinessERP-Desktop/artifacts/BusinessERP-Desktop-0.4.2-Signup-Downloads-20261112`, and produced `artifacts/installers/BusinessERP-Desktop-0.4.2-Setup.exe` (235,171,751 bytes; SHA-256 `25B4009F62FC70236FA2D80EF2E3E635639B1BBCB1EFF641B41466239FACF0CF`). Authenticode is `NotSigned`; Windows publisher identity/certificate is still unresolved. Existing installer files were retained under `artifacts/installers-previous-20261112`. No installer runtime/hardware tests or deployment were performed.
