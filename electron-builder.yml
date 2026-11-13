@@ -3,7 +3,7 @@ productName: Business ERP
 executableName: Business ERP Desktop
 electronVersion: 40.10.6
 directories:
-  output: artifacts/installers
+  output: artifacts/installers-retail-pos-staple-20261113
 win:
   target:
     - target: nsis

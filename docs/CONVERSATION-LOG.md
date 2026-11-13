@@ -69,3 +69,9 @@ User reported Setup Finish opening a Missing Shortcut dialog for `Business ERP.e
 ## Desktop package checkpoint — 2026-11-12
 
 Built the shared backend and Desktop-specific Next standalone bundle, assembled portable folder `Desktop-Development/BusinessERP-Desktop/artifacts/BusinessERP-Desktop-0.4.2-Signup-Downloads-20261112`, and produced `artifacts/installers/BusinessERP-Desktop-0.4.2-Setup.exe` (235,171,751 bytes; SHA-256 `25B4009F62FC70236FA2D80EF2E3E635639B1BBCB1EFF641B41466239FACF0CF`). Authenticode is `NotSigned`; Windows publisher identity/certificate is still unresolved. Existing installer files were retained under `artifacts/installers-previous-20261112`. No installer runtime/hardware tests or deployment were performed.
+
+## 2026-11-13 — Packaged current Android and Desktop builds
+
+Android release 0.14.5 (24) was assembled and signed with the existing production identity at `artifacts/packaging-20261113/Business ERP.apk`; signature verification passed. It is byte-identical to the 0.14.5 artifact from Nov 12 because no Android source changed. Consequently this APK does not contain the recently added web Retail business-line catalog filtering.
+
+Desktop backend and Desktop-specific Next standalone builds passed. Portable bundle: `artifacts/BusinessERP-Desktop-0.4.2-Retail-Business-Lines-20261113`; setup installer: `artifacts/installers-20261113/BusinessERP-Desktop-0.4.2-Setup.exe`. Version remains 0.4.2 to preserve the existing activation/schema contract. Installer Authenticode status is NotSigned; the build emitted a default Electron icon warning. Previous packages remain intact. No test suite, device installation, installer launch, upload or deployment was performed.
