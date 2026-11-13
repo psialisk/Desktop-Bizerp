@@ -1,13 +1,15 @@
 param(
  [string]$PortableApp='D:\Business ERP\Desktop-Development\BusinessERP-Desktop\artifacts\BusinessERP-Desktop-0.4.2-Offline-Camera-20261111',
+ [string]$InstallerDirectory='installers-retail-pos-staple-20261113',
  [string]$BuilderVersion='26.0.12'
 )
 $ErrorActionPreference='Stop'
 $repo=(Resolve-Path "$PSScriptRoot\..").Path
+if($InstallerDirectory -notmatch '^installers(?:-[a-zA-Z0-9.-]+)?$'){throw 'Invalid installer artifact directory'}
 $portable=(Resolve-Path $PortableApp).Path
 $required=@('Business ERP Desktop.exe','icudtl.dat','resources.pak','chrome_100_percent.pak','locales\en-US.pak','resources\app\package.json','resources\runtime\manifest.json','resources\runtime\node\node.exe')
 foreach($relative in $required){if(-not(Test-Path (Join-Path $portable $relative))){throw "Portable desktop package is incomplete; missing $relative"}}
-$out=Join-Path $repo 'artifacts\installers'
+$out=Join-Path $repo ('artifacts\'+$InstallerDirectory)
 if(Test-Path $out){$existing=Get-ChildItem $out -File -ErrorAction SilentlyContinue;if($existing){throw "Installer output already exists at $out; retain it and choose a new output directory before rebuilding."}}
 Push-Location $repo
 try{
