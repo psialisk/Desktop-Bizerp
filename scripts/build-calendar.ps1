@@ -75,6 +75,6 @@ $paths=@(
  @{hash='26fbc3d6a1ba7e098dd1c09fe4abacaa48d45d96861e09c8cc0405b5ec1d405d';file='104_105_from_103_retail_counter_workflow.sql'},
  @{hash='f700b9a869d2b58ee16868bc9098669266622d18dfd4675bc523b45689048137';file='105_from_104_food_counter_staple.sql'}
 )
-$old.upgrades=@($paths | ForEach-Object {@{fromVersion='0.4.2';fromHash=$_.hash;toHash=$old.schemaHash;file=('migrations/'+$_.file);migrationHash=(Get-FileHash (Join-Path "$runtime\migrations" $_.file) -Algorithm SHA256).Hash.ToLowerInvariant()}})
+$old.upgrades=@($paths | ForEach-Object {@{configExpansion='counter-staples-103-105';fromVersion='0.4.2';fromHash=$_.hash;toHash=$old.schemaHash;file=('migrations/'+$_.file);migrationHash=(Get-FileHash (Join-Path "$runtime\migrations" $_.file) -Algorithm SHA256).Hash.ToLowerInvariant()}})
 [IO.File]::WriteAllText("$runtime\manifest.json",($old|ConvertTo-Json -Depth 20),[Text.UTF8Encoding]::new($false))
 Write-Output "Built portable development folder: $output"

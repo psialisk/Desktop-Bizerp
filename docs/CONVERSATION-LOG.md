@@ -75,3 +75,25 @@ Built the shared backend and Desktop-specific Next standalone bundle, assembled 
 Android release 0.14.5 (24) was assembled and signed with the existing production identity at `artifacts/packaging-20261113/Business ERP.apk`; signature verification passed. It is byte-identical to the 0.14.5 artifact from Nov 12 because no Android source changed. Consequently this APK does not contain the recently added web Retail business-line catalog filtering.
 
 Desktop backend and Desktop-specific Next standalone builds passed. Portable bundle: `artifacts/BusinessERP-Desktop-0.4.2-Retail-Business-Lines-20261113`; setup installer: `artifacts/installers-20261113/BusinessERP-Desktop-0.4.2-Setup.exe`. Version remains 0.4.2 to preserve the existing activation/schema contract. Installer Authenticode status is NotSigned; the build emitted a default Electron icon warning. Previous packages remain intact. No test suite, device installation, installer launch, upload or deployment was performed.
+
+## 2026-11-13 — Desktop product photo editor package
+
+Rebuilt the Desktop-specific Next.js standalone frontend from the shared Cloud product editor (file upload, camera and industry-suggested photos) and assembled portable package `artifacts/BusinessERP-Desktop-0.4.2-Product-Photos-20261113`. Desktop's local-only video camera permission allowlist remains the camera boundary. No source code changes were needed in the Electron wrapper for the shared photo UI. Installer packaging is in progress; runtime camera/photo acceptance not performed.
+
+### 2026-11-13 — Product-photo installer result
+
+The shared Cloud photo UI was built into a fresh portable Desktop folder and NSIS installer. Installer: `artifacts/installers-product-photos-20261113/BusinessERP-Desktop-0.4.2-Setup.exe`, 258,047,999 bytes, SHA-256 `39653E12407DB7AAA9583C589D55B6D2491BF300C63D15EEF5CE59435586E241`; Authenticode is `NotSigned`. Desktop version remains 0.4.2. Next, portable and installer builds succeeded; no test suite, installation, first-run or camera flow was run. Verification is in `artifacts/installers-product-photos-20261113/verification.json`.
+
+## 2026-11-13 Desktop counter configuration upgrade
+- Fixed upgrade validation for packaged migrations 103–105: manifest declares counter-staples-103-105 configuration expansion; tenant_foundations/audit_logs may change, while all other existing table fingerprints remain checked.
+- Added resulting Retail/Food block and workflow validation; NULL workflow selections retain legacy all-eligible semantics.
+- Kept backup/clone/switch-after-success behavior; installed user profile was not opened or modified.
+- Added isolated PostgreSQL integration check for source versions 102, 103, 104: all passed, including idempotency, backups and original copies.
+- Fixed installer script to honor InstallerDirectory rather than YAML's hardcoded output location.
+- Portable artifact: BusinessERP-Desktop-0.4.2-Counter-Upgrade-20261113. Installer: installers-counter-upgrade-20261113.
+- Reuses existing packaged frontend build; this release verifies schema/config upgrade, not installed-device acceptance or full transaction data integrity.
+
+## 2026-11-14 — Desktop login portals
+- Aligned the desktop sign-in screen with the supplied Business/POS portal layout and added the existing Cloud Customer login as a network-only portal.
+- Removed the local business selector and local setup/license links from the login view; the local/network switch and local Business/POS authentication remain.
+- Customer authentication continues through the existing renter login and renter workspace checks. No auth backend changes, tests, packaging, or deployment were performed.

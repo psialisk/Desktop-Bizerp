@@ -13,7 +13,7 @@ $out=Join-Path $repo ('artifacts\'+$InstallerDirectory)
 if(Test-Path $out){$existing=Get-ChildItem $out -File -ErrorAction SilentlyContinue;if($existing){throw "Installer output already exists at $out; retain it and choose a new output directory before rebuilding."}}
 Push-Location $repo
 try{
- & npx --yes "electron-builder@$BuilderVersion" --projectDir $repo --prepackaged $portable --win nsis --publish never --config (Join-Path $repo 'electron-builder.yml')
+ & npx --yes "electron-builder@$BuilderVersion" --projectDir $repo --prepackaged $portable --win nsis --publish never --config (Join-Path $repo 'electron-builder.yml') --config.directories.output=$out
  if($LASTEXITCODE -ne 0){throw "electron-builder failed with exit code $LASTEXITCODE"}
  $installer=Join-Path $out 'BusinessERP-Desktop-0.4.2-Setup.exe'
  if(-not(Test-Path $installer)){throw 'electron-builder completed without creating the expected setup installer'}
