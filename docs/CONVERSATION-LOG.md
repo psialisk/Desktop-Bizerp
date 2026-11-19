@@ -1,5 +1,9 @@
 # Conversation log
 
+## 2026-11-18 — Package signup UI update
+
+Built Desktop 0.4.5 portable output and NSIS installer from the current feature working tree. The package retains app ID `com.gnj.businesserp.desktop`, embeds the responsive Desktop signup window and current Desktop runtime bundle. Installer: `artifacts/installers-signup-flow-20261118/BusinessERP-Desktop-0.4.5-Setup.exe`, SHA-256 `3ACC226F67A3C65B55A86FFE5AFEEB4A397F106AC298E239A90AA42CF187756C`; Authenticode reports `NotSigned`. No installer launch, tests, or deployment. Signup popup targets the canonical live Cloud URL; the Cloud web redesign still needs deployment.
+
 
 ## 2026-11-01 / 2026-11-02 - Operational calendar implementation approval and Desktop recovery
 User authorized General Retail, Water Refilling and Pharmacy calendars on cloud/Desktop/Android first, then other sub-specs; supplied D:/Business ERP/BusinessERP-Desktop-0.4.2-Setup-Loading.exe and authorized unpacking into a folder for GitHub development; later said proceed. Recovered readable Electron source and created a local feature branch without touching installed data. Implemented source-derived calendar, auditable operational tasks, guarded cloud/native screens and private Desktop build. Priority validation and artifact details: docs/OPERATIONAL-CALENDAR.md. Other sub-specs remain behind the requested priority gate. Every conversation continues to be mirrored as Markdown; no real credentials copied.
@@ -97,3 +101,25 @@ The shared Cloud photo UI was built into a fresh portable Desktop folder and NSI
 - Aligned the desktop sign-in screen with the supplied Business/POS portal layout and added the existing Cloud Customer login as a network-only portal.
 - Removed the local business selector and local setup/license links from the login view; the local/network switch and local Business/POS authentication remain.
 - Customer authentication continues through the existing renter login and renter workspace checks. No auth backend changes, tests, packaging, or deployment were performed.
+
+## 2026-11-14 Desktop package refresh — 0.4.4
+- Backend `nest build` and shared frontend desktop production build passed, including frontend prebuild checks. Portable runtime and NSIS installer generated.
+- Installer: `artifacts/installers-subscription-extension-20261114/BusinessERP-Desktop-0.4.4-Setup.exe`, 259,181,364 bytes; SHA-256 `788D065A0E2FE873E7B736A0EF9436C414F6B0E94A2ADA33300EDA7011BF06B6`.
+- Authenticode status is `NotSigned`; no trusted Windows publisher certificate was configured. No installation/runtime acceptance was performed. Existing user profile data was not opened or modified.
+
+## 2026-11-18 — Optional owner email and phone sign-in package
+
+- Packaged Desktop `0.4.7` portable build with owner email optional, password-based phone sign-in, and migration 114 plus a recognized forward mapping from the 0.4.6 schema.
+- Portable output: `artifacts/BusinessERP-Desktop-0.4.7-Owner-Email-20261118` (27,376 files; 883,374,018 bytes).
+- Installer: `artifacts/installers-owner-email-20261118/BusinessERP-Desktop-0.4.7-Setup.exe` (301,351,615 bytes; SHA-256 `2EB34AA5F61D915BDED50741755BFBBD2E741F7FB921622428D61DAD92DA1D48`). Windows Authenticode reports it as unsigned.
+- Backend build and Web type/build passed. No automated tests or live-account acceptance were run. Cloud migration 114 remains unapplied and Cloud deployment remains pending.
+
+## 2026-11-19 — Desktop cloud tenant bootstrap repair (0.4.16)
+- Investigated a fresh-install failure after successful cloud authentication. The packaged schema omitted migration 112 (`tenant_business_first_logins`), and descending snapshot replay encountered stock trigger dependencies before stock locations/opening stock were present.
+- Added the missing 106/107/112 schema migrations and a reviewed automatic 0.4.15 repair route. Dependency retries retain pending records, and a successful cloud login can open its workspace when local preparation is pending. No automatic backup was added.
+- Replayed all 87 records from the affected local pending queue in an isolated PostgreSQL-compatible database successfully; the installed database and queue were not changed. Native Android sync work remains pending while this Desktop blocker is addressed.
+
+### Desktop 0.4.16 repair package — 2026-11-19
+- Installer-only release: `D:\Business ERP\Desktop-Development\BusinessERP-Desktop\artifacts\installers-schema-repair-20261119\BusinessERP-Desktop-0.4.16-Setup.exe`; 372,415,204 bytes; SHA-256 `D9E7D8015B98398CE0660D0214AA16812A6D11D1C20222991903BDDC9E00B970`; unsigned. Embedded schema, repair SQL and sync/login source hashes match the tested bundle.
+- Packaged fresh schema and automatic migrations from 0.4.13 and 0.4.15 passed. The packaged importer replayed all 87 affected pending events across 32 tables in an isolated database. Existing installed data and its retry queue were not modified; no backup was created. Install over 0.4.15 and retry cloud Business login to apply the repair.
+- No new cloud API deployment was required. Android cloud/local sync implementation and patch packaging remain pending following this Desktop blocker.

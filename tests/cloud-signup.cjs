@@ -1,0 +1,10 @@
+const assert=require('node:assert/strict');
+const {signupWindowOptions,signupTarget}=require('../src/cloud-signup.cjs');
+assert.equal(signupTarget(),'https://www.bizerpsme.shop/signup');
+const options=signupWindowOptions();
+assert.equal(options.webPreferences.nodeIntegration,false);
+assert.equal(options.webPreferences.contextIsolation,true);
+assert.equal(options.webPreferences.sandbox,true);
+assert.equal(options.webPreferences.partition,'persist:business-erp-cloud-signup');
+assert.equal(options.webPreferences.preload,undefined);
+console.log('PASS canonical Cloud signup, isolated session and no local bridge');
