@@ -14,7 +14,7 @@ function credentialInput(raw){
 }
 async function jsonRequest(api,path,{token,body}={},fetcher=fetch){
  const response=await fetcher(api+path,{method:body?'POST':'GET',redirect:'error',signal:AbortSignal.timeout(20000),headers:{Accept:'application/json',...(body?{'Content-Type':'application/json'}:{}),...(token?{Authorization:'Bearer '+token}:{})},...(body?{body:JSON.stringify(body)}:{})});
- if(!response.ok){let message='Sign-in request failed (HTTP '+response.status+')';try{const value=await response.json();if(typeof value.message==='string')message=value.message.slice(0,300);}catch{}throw Error(message);}
+ if(!response.ok){let message='Sign-in request failed (HTTP '+response.status+')';try{const value=await response.json();if(typeof value.message==='string')message=value.message.slice(0,300);}catch{}const error=Error(message);error.status=response.status;throw error;}
  const reader=response.body.getReader();let size=0;const chunks=[];try{while(true){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>4*1024*1024)throw Error('Sign-in response is too large');chunks.push(Buffer.from(value));}}finally{reader.releaseLock();}
  return JSON.parse(Buffer.concat(chunks).toString('utf8'));
 }
@@ -30,11 +30,11 @@ async function authenticate(api,input,fetcher=fetch){
  return {token:result.accessToken,actor};
 }
 class WorkspaceLogin{
- constructor({WebContentsView,control,workspaces,runtime,cloudApi,onReturn}){Object.assign(this,{WebContentsView,control,workspaces,runtime,cloudApi,onReturn});this.active=null;this.opening=null;control.on('resize',()=>this.resize());}
+ constructor({WebContentsView,control,workspaces,runtime,cloudApi,onReturn,onCloudLogin}){Object.assign(this,{WebContentsView,control,workspaces,runtime,cloudApi,onReturn,onCloudLogin});this.active=null;this.opening=null;control.on('resize',()=>this.resize());}
  resize(){if(this.active){const [width,height]=this.control.getContentSize();this.active.view.setBounds({x:0,y:0,width,height});}}
  async login(raw){
   const input=credentialInput(raw);if(this.active||this.opening)throw Error('Sign out of the current workspace first');
-  const local=input.mode==='local',rt=this.runtime();if(local&&!rt.ready)throw Error('Local business is not ready. Create the business or wait for startup.');
+  const local=input.mode==='local',rt=this.runtime();if(local)await require('./tenant-sync.cjs').selectOffline(rt,input.email);if(local&&!rt.ready)throw Error('Local business is not ready. Create the business or wait for startup.');
   const target=local?{origin:rt.status().url,api:rt.status().url+'/api'}:connection(input.server,this.cloudApi);
   const workflows=require(require('node:path').join(rt.bundle,'backend/dist/modules/foundation/catalog.json')).counterWorkflows.filter(w=>w.status==='ready');
   const workflow=workflows.find(w=>w.id===input.workflowId)||workflows.find(w=>w.id===(local&&rt.v.localBusiness?.packageId==='water-refilling'?'water-desk':'retail'));
@@ -57,7 +57,7 @@ class WorkspaceLogin{
    await load(target.origin+'/business-login');if(new URL(wc.getURL()).origin!==target.origin)throw Error('Workspace server redirected to another address');
    const installationId=await wc.executeJavaScript(`(()=>{let id=localStorage.getItem('business_erp_pos_installation');if(!/^[a-f0-9-]{36}$/i.test(id||'')){id=${JSON.stringify(randomUUID())};localStorage.setItem('business_erp_pos_installation',id);}return id})()`);
    if(local&&rt.v.cloudBinding)await require('./cloud-staff.cjs').prepareLogin(rt,input);
-   const auth=await authenticate(target.api,{...input,workflow,installationId});entry.actor=auth.actor;
+   const auth=await authenticate(target.api,{...input,workflow,installationId});entry.actor=auth.actor;if(!local&&input.kind==='owner'){try{const prepared=await require('./tenant-sync.cjs').cloudLogin(rt,input,auth,target.api);if(prepared)rt.message('Cloud login and local tenant synchronization completed.');}catch(e){rt.message('Cloud login is ready. Local synchronization is pending: '+e.message);}if(auth.token&&typeof this.onCloudLogin==='function'){try{await this.onCloudLogin({api:target.api,token:auth.token,actor:auth.actor});}catch(e){rt.message('Signed in. Update registration is pending: '+e.message);}}}
    if(new URL(wc.getURL()).origin!==target.origin)throw Error('Workspace address changed during sign-in');
    const key=input.kind==='owner'?'staff_token':input.kind==='customer'?'renter_token':'pos_token';
    await wc.executeJavaScript(`(()=>{for(const key of ['staff_token','pos_token','renter_token'])localStorage.removeItem(key);localStorage.setItem(${JSON.stringify(key)},${JSON.stringify(auth.token)});})()`);
@@ -79,6 +79,7 @@ class WorkspaceLogin{
   }
   if(notify)this.onReturn({mode:entry.mode,kind:entry.kind});
  }
+ async authorizeLocalUser(){const entry=this.active,rt=this.runtime();if(!entry||entry.networkWorkspace||!['owner','pos'].includes(entry.kind)||entry.desktopContext?.store!==rt.v.databases[rt.mode])throw Error('Sign in locally to use synchronization');if(new URL(entry.webContents.getURL()).origin!==entry.origin)throw Error('Local workspace changed');const key=entry.kind==='pos'?'pos_token':'staff_token',token=await entry.webContents.executeJavaScript('localStorage.getItem('+JSON.stringify(key)+')');const actor=await jsonRequest(entry.api,'/auth/staff/me',{token});if(actor.id!==entry.actor.id||!['owner','manager','staff'].includes(actor.role))throw Error('Local business identity required');return actor;}
  async authorizeOwner(){const entry=this.active,rt=this.runtime();if(!entry||entry.networkWorkspace||entry.kind!=='owner'||entry.desktopContext?.store!==rt.v.databases[rt.mode])throw Error('Sign in locally as Business Owner to use local tools');
   if(new URL(entry.webContents.getURL()).origin!==entry.origin)throw Error('Local workspace changed');const token=await entry.webContents.executeJavaScript('localStorage.getItem("staff_token")');
   const actor=await jsonRequest(entry.api,'/auth/staff/me',{token});if(actor.id!==entry.actor.id||actor.role!=='owner')throw Error('Local owner access required');return actor;

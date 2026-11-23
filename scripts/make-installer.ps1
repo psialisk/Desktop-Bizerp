@@ -1,7 +1,8 @@
 param(
  [string]$PortableApp='D:\Business ERP\Desktop-Development\BusinessERP-Desktop\artifacts\BusinessERP-Desktop-0.4.2-Offline-Camera-20261111',
  [string]$InstallerDirectory='installers-retail-pos-staple-20261113',
- [string]$BuilderVersion='26.0.12'
+ [string]$BuilderVersion='26.0.12',
+ [ValidateSet('store','normal','maximum')][string]$Compression='normal'
 )
 $ErrorActionPreference='Stop'
 $repo=(Resolve-Path "$PSScriptRoot\..").Path
@@ -13,9 +14,10 @@ $out=Join-Path $repo ('artifacts\'+$InstallerDirectory)
 if(Test-Path $out){$existing=Get-ChildItem $out -File -ErrorAction SilentlyContinue;if($existing){throw "Installer output already exists at $out; retain it and choose a new output directory before rebuilding."}}
 Push-Location $repo
 try{
- & npx --yes "electron-builder@$BuilderVersion" --projectDir $repo --prepackaged $portable --win nsis --publish never --config (Join-Path $repo 'electron-builder.yml')
+ & npx --yes "electron-builder@$BuilderVersion" --projectDir $repo --prepackaged $portable --win nsis --publish never --config (Join-Path $repo 'electron-builder.yml') --config.directories.output=$out --config.compression=$Compression
  if($LASTEXITCODE -ne 0){throw "electron-builder failed with exit code $LASTEXITCODE"}
- $installer=Join-Path $out 'BusinessERP-Desktop-0.4.2-Setup.exe'
+ $version=(Get-Content (Join-Path $repo 'package.json') -Raw | ConvertFrom-Json).version
+ $installer=Join-Path $out ('BusinessERP-Desktop-'+$version+'-Setup.exe')
  if(-not(Test-Path $installer)){throw 'electron-builder completed without creating the expected setup installer'}
  Get-Item $installer | Select-Object FullName,Length,LastWriteTime
  Get-FileHash $installer -Algorithm SHA256 | Select-Object Algorithm,Hash

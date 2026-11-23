@@ -41,6 +41,21 @@ $post091Parts=foreach($migrationFile in $post091Files){
  $sql
 }
 $post091Sql=$post091Parts -join "`n`n"
+$post091Sql += "`n`n"+[IO.File]::ReadAllText((Join-Path $Backend 'sql\111_email_verification.sql'))
+$post091Sql += "`n`n"+[IO.File]::ReadAllText((Join-Path $Backend 'sql\113_retail_package_deliveries.sql'))
+$post091Sql += "`n`n"+[IO.File]::ReadAllText((Join-Path $Backend 'sql\114_owner_email_trial_access.sql'))
+$bonusSql=[IO.File]::ReadAllText((Join-Path $Backend 'sql\115_owner_email_trial_bonus.sql'))
+$post091Sql += "`n`n"+$bonusSql
+$recordSyncSql=@('106_laundry_counter_staple.sql','107_salon_desk.sql','112_tenant_business_first_logins.sql','116_workflow_role_permissions.sql','117_per_record_sync_history.sql','118_desktop_record_sync.sql') | ForEach-Object {[IO.File]::ReadAllText((Join-Path $Backend ('sql\'+$_)))}
+$recordSyncSql=$recordSyncSql -join "`n`n"
+$post091Sql += "`n`n"+$recordSyncSql
+$fitnessMigrations=@('128_fitness_courts_open_play.sql','129_fitness_reservation_billing.sql','130_fitness_venue_profile.sql','131_fitness_court_slot_rates.sql','132_fitness_payment_fees.sql') | ForEach-Object {
+ $migrationPath=Join-Path $Backend ('sql\'+$_)
+ if(-not(Test-Path $migrationPath)){throw "Required Pickleball migration is missing: $_"}
+ [IO.File]::ReadAllText($migrationPath)
+}
+$fitnessSql=$fitnessMigrations -join "`n`n"
+$post091Sql += "`n`n"+$fitnessSql
 $schema=[IO.File]::ReadAllText("$repo\scripts\schema_calendar.sql")
 [IO.File]::WriteAllText("$runtime\schema.sql",$schema+"`n`n"+$post091Sql,$utf8)
 New-Item -ItemType Directory -Path "$runtime\migrations" -Force | Out-Null
@@ -58,8 +73,23 @@ $retailWorkflowSql=[IO.File]::ReadAllText((Join-Path $Backend 'sql\104_retail_co
 $foodCounterSql=[IO.File]::ReadAllText((Join-Path $Backend 'sql\105_food_counter_staple.sql'))
 [IO.File]::WriteAllText("$runtime\migrations\104_105_from_103_retail_counter_workflow.sql",($retailWorkflowSql+"`n`n"+$foodCounterSql),$utf8)
 [IO.File]::WriteAllText("$runtime\migrations\105_from_104_food_counter_staple.sql",$foodCounterSql,$utf8)
+$verificationSql=[IO.File]::ReadAllText((Join-Path $Backend 'sql\111_email_verification.sql'))
+$deliveryUpgradeSql=[IO.File]::ReadAllText((Join-Path $Backend 'sql\113_retail_package_deliveries.sql'))
+$ownerTrialSql=[IO.File]::ReadAllText((Join-Path $Backend 'sql\114_owner_email_trial_access.sql'))
+$bonusSql=[IO.File]::ReadAllText((Join-Path $Backend 'sql\115_owner_email_trial_bonus.sql'))
+$emailAndDeliveryUpgradeSql=$verificationSql+"`n`n"+$deliveryUpgradeSql+"`n`n"+$ownerTrialSql+"`n`n"+$bonusSql
+$emailOnlyUpgradeSql=$verificationSql+"`n`n"+$ownerTrialSql+"`n`n"+$bonusSql
+[IO.File]::WriteAllText("$runtime\migrations\111_113_114_115_from_105.sql",$emailAndDeliveryUpgradeSql,$utf8)
+[IO.File]::WriteAllText("$runtime\migrations\111_114_115_from_113.sql",$emailOnlyUpgradeSql,$utf8)
+[IO.File]::WriteAllText("$runtime\migrations\115_owner_email_trial_bonus.sql",$bonusSql,$utf8)
+[IO.File]::WriteAllText("$runtime\migrations\116_118_desktop_record_sync.sql",$recordSyncSql,$utf8)
+foreach($migrationFile in Get-ChildItem "$runtime\migrations" -Filter '*.sql'){if($migrationFile.Name -ne '116_118_desktop_record_sync.sql' -and -not([IO.File]::ReadAllText($migrationFile.FullName).Contains('desktop_sync_tables'))){[IO.File]::AppendAllText($migrationFile.FullName,"`n`n"+$recordSyncSql,$utf8)}}
+$compatibilitySql=(@('106_laundry_counter_staple.sql','107_salon_desk.sql','112_tenant_business_first_logins.sql','118_desktop_record_sync.sql') | ForEach-Object {[IO.File]::ReadAllText((Join-Path $Backend ('sql\'+$_)))}) -join "`n`n"
+$compatibilitySql += "`n`n"+$fitnessSql
+[IO.File]::WriteAllText("$runtime\migrations\119_desktop_schema_compatibility.sql",$compatibilitySql,$utf8)
 $old=Get-Content "$RecoveredApplication\resources\runtime\manifest.json" -Raw | ConvertFrom-Json
 $oldHash=$old.schemaHash
+$old.version=(Get-Content (Join-Path $repo 'package.json') -Raw | ConvertFrom-Json).version
 $old.schemaHash=(Get-FileHash "$runtime\schema.sql" -Algorithm SHA256).Hash.ToLowerInvariant()
 $old.sharedBackendHash=(Get-FileHash "$runtime\backend\dist\main.js" -Algorithm SHA256).Hash.ToLowerInvariant()
 $old.builtAt=[DateTime]::UtcNow.ToString('o')
@@ -75,6 +105,14 @@ $paths=@(
  @{hash='26fbc3d6a1ba7e098dd1c09fe4abacaa48d45d96861e09c8cc0405b5ec1d405d';file='104_105_from_103_retail_counter_workflow.sql'},
  @{hash='f700b9a869d2b58ee16868bc9098669266622d18dfd4675bc523b45689048137';file='105_from_104_food_counter_staple.sql'}
 )
-$old.upgrades=@($paths | ForEach-Object {@{fromVersion='0.4.2';fromHash=$_.hash;toHash=$old.schemaHash;file=('migrations/'+$_.file);migrationHash=(Get-FileHash (Join-Path "$runtime\migrations" $_.file) -Algorithm SHA256).Hash.ToLowerInvariant()}})
+$old.upgrades=@($paths | ForEach-Object {@{configExpansion='counter-staples-103-105';fromVersion='0.4.2';fromHash=$_.hash;toHash=$old.schemaHash;file=('migrations/'+$_.file);migrationHash=(Get-FileHash (Join-Path "$runtime\migrations" $_.file) -Algorithm SHA256).Hash.ToLowerInvariant()}})
+$old.upgrades += @{emailTrialExpansion='owner-email-trial-v1';fromVersion='0.4.3-0.4.5';fromHash='36de0d7012e9b61457a9b58300c5046c76f33a136780cc7b13b4b8a319a757b9';toHash=$old.schemaHash;file='migrations/111_113_114_115_from_105.sql';migrationHash=(Get-FileHash "$runtime\migrations\111_113_114_115_from_105.sql" -Algorithm SHA256).Hash.ToLowerInvariant()}
+$old.upgrades += @{emailTrialExpansion='owner-email-trial-v1';fromVersion='0.4.2';fromHash='9ed056f3b5807ef67d5bc859069636ac553088965789a506c856c1f45a306e41';toHash=$old.schemaHash;file='migrations/111_113_114_115_from_105.sql';migrationHash=(Get-FileHash "$runtime\migrations\111_113_114_115_from_105.sql" -Algorithm SHA256).Hash.ToLowerInvariant()}
+$old.upgrades += @{emailTrialExpansion='owner-email-trial-v1';fromVersion='0.4.6';fromHash='9fac6eafff9e61b46ff358f30dd3a430963ccc57d502c153a6679215b882e50b';toHash=$old.schemaHash;file='migrations/111_114_115_from_113.sql';migrationHash=(Get-FileHash "$runtime\migrations\111_114_115_from_113.sql" -Algorithm SHA256).Hash.ToLowerInvariant()}
+$old.upgrades += @{fromVersion='0.4.7';fromHash='04c6b0f65aba6d863ac91fc738f8d0a5411d8d4f079c9ff85c9ad33a005d8c1b';toHash=$old.schemaHash;file='migrations/115_owner_email_trial_bonus.sql';migrationHash=(Get-FileHash "$runtime\migrations\115_owner_email_trial_bonus.sql" -Algorithm SHA256).Hash.ToLowerInvariant()}
+$old.upgrades += @{fromVersion='0.4.8-0.4.15';fromHash='5f64bbc2be26063d5eae8ff725341c9f31fbbcb1ea6a87981ecca235cc974c99';toHash=$old.schemaHash;file='migrations/119_desktop_schema_compatibility.sql';migrationHash=(Get-FileHash "$runtime\migrations\119_desktop_schema_compatibility.sql" -Algorithm SHA256).Hash.ToLowerInvariant()}
+$previousSyncHash='05c63fe64673ee3e07bf31cc5348ef959fb76fe10c67cbe7a9d531c8ce402ff5'
+$old.upgrades += @{fromVersion='0.4.15';fromHash=$previousSyncHash;toHash=$old.schemaHash;file='migrations/119_desktop_schema_compatibility.sql';migrationHash=(Get-FileHash "$runtime\migrations\119_desktop_schema_compatibility.sql" -Algorithm SHA256).Hash.ToLowerInvariant()}
+foreach($u in $old.upgrades){$u.recordSyncExpansion='desktop-record-sync-v1'}
 [IO.File]::WriteAllText("$runtime\manifest.json",($old|ConvertTo-Json -Depth 20),[Text.UTF8Encoding]::new($false))
 Write-Output "Built portable development folder: $output"
