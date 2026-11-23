@@ -16,9 +16,9 @@ function start(rt){
  if(!rt.manifest.fullErp||!rt.manifest.cloudApi||!rt.v.localBusiness)return;
  let running=false;
  const tick=async()=>{if(rt.cloudStopped||generation!==rt.cloudGeneration||running||rt.mode!=='live')return;running=true;
-  try{const result=await register(rt);if(!result||generation!==rt.cloudGeneration)return;const prior=rt.v.cloudRegistration||{};
+  try{const result=await register(rt);if(!result||generation!==rt.cloudGeneration)return;if(result.licenseControl)await require('./license-control.cjs').set(rt,result.licenseControl);if(!result.licenseControl||result.licenseControl.status==='active')await require('./automatic-license.cjs').applyRegistered(rt,result.activation);const prior=rt.v.cloudRegistration||{};
    rt.v.cloudRegistration={...prior,...result,message:prior.conflict?'Cloud sync paused for conflict review; rebuild only after reconciling local records.':result.cloudEntitled===true?'Cloud enabled; preparing read-only reporting sync':'Business registered as local-generated. Reporting sync waits for verified Cloud access.',checkedAt:new Date().toISOString()};
-   await rt.secrets.save(rt.v);if(result.cloudEntitled===true&&!prior.conflict)await require('./cloud-replica.cjs').sync(rt,result);if(generation===rt.cloudGeneration)rt.message(rt.v.cloudRegistration.message);
+   await rt.secrets.save(rt.v);if(result.cloudEntitled===true&&!prior.conflict&&(!result.licenseControl||result.licenseControl.status==='active'))await require('./cloud-replica.cjs').sync(rt,result);if(generation===rt.cloudGeneration)rt.message(rt.v.cloudRegistration.message);
   }catch(e){if(rt.cloudStopped||generation!==rt.cloudGeneration)return;rt.v.cloudRegistration={...rt.v.cloudRegistration,cloudEntitled:false,conflict:e.status===409||rt.v.cloudRegistration?.conflict,message:(e.status===409?'Cloud sync paused for conflict review. ':'Working offline. ')+e.message,checkedAt:new Date().toISOString()};await rt.secrets.save(rt.v);rt.message('Local ERP is ready; '+(e.status===409?'review the cloud sync conflict.':'cloud registration/sync will retry when available.'));}
   finally{running=false;}
  };

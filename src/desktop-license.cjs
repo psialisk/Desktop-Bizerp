@@ -1,4 +1,3 @@
-// Generated from canonical backend desktop-license. Run scripts/sync-license-contract.cjs after backend build.
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.publicFingerprint = publicFingerprint;
@@ -55,7 +54,9 @@ function verifyDesktopGrant(text, keys, binding, now = new Date(), allowExpiredF
         fail('Invalid activation signature');
     if (['platform', 'installationId', 'localBusinessId', 'fingerprint'].some(k => binding[k] !== c[k]) || (binding.licenseId && binding.licenseId !== c.licenseId))
         fail('Activation binding does not match this installation/business');
-    if (binding.installedVersion !== c.purchasedVersion)
+    if (c.compatibleVersions !== undefined && (!list(c.compatibleVersions, 32) || !c.compatibleVersions.includes(c.purchasedVersion)))
+        fail('Invalid signed compatible versions');
+    if (binding.installedVersion !== c.purchasedVersion && !c.compatibleVersions?.includes(binding.installedVersion))
         fail('This license covers a different purchased version');
     if (c.revision < (binding.minimumRevision || 0))
         fail('Activation revision rollback rejected');
@@ -67,3 +68,4 @@ function verifyDesktopGrant(text, keys, binding, now = new Date(), allowExpiredF
         fail('Activation is not active yet');
     return c;
 }
+//# sourceMappingURL=desktop-license.js.map

@@ -30,7 +30,7 @@ async function authenticate(api,input,fetcher=fetch){
  return {token:result.accessToken,actor};
 }
 class WorkspaceLogin{
- constructor({WebContentsView,control,workspaces,runtime,cloudApi,onReturn}){Object.assign(this,{WebContentsView,control,workspaces,runtime,cloudApi,onReturn});this.active=null;this.opening=null;control.on('resize',()=>this.resize());}
+ constructor({WebContentsView,control,workspaces,runtime,cloudApi,onReturn,onCloudLogin}){Object.assign(this,{WebContentsView,control,workspaces,runtime,cloudApi,onReturn,onCloudLogin});this.active=null;this.opening=null;control.on('resize',()=>this.resize());}
  resize(){if(this.active){const [width,height]=this.control.getContentSize();this.active.view.setBounds({x:0,y:0,width,height});}}
  async login(raw){
   const input=credentialInput(raw);if(this.active||this.opening)throw Error('Sign out of the current workspace first');
@@ -57,7 +57,7 @@ class WorkspaceLogin{
    await load(target.origin+'/business-login');if(new URL(wc.getURL()).origin!==target.origin)throw Error('Workspace server redirected to another address');
    const installationId=await wc.executeJavaScript(`(()=>{let id=localStorage.getItem('business_erp_pos_installation');if(!/^[a-f0-9-]{36}$/i.test(id||'')){id=${JSON.stringify(randomUUID())};localStorage.setItem('business_erp_pos_installation',id);}return id})()`);
    if(local&&rt.v.cloudBinding)await require('./cloud-staff.cjs').prepareLogin(rt,input);
-   const auth=await authenticate(target.api,{...input,workflow,installationId});entry.actor=auth.actor;if(!local&&input.kind==='owner'){try{const prepared=await require('./tenant-sync.cjs').cloudLogin(rt,input,auth,target.api);if(prepared)rt.message('Cloud login and local tenant synchronization completed.');}catch(e){rt.message('Cloud login is ready. Local synchronization is pending: '+e.message);}}
+   const auth=await authenticate(target.api,{...input,workflow,installationId});entry.actor=auth.actor;if(!local&&input.kind==='owner'){try{const prepared=await require('./tenant-sync.cjs').cloudLogin(rt,input,auth,target.api);if(prepared)rt.message('Cloud login and local tenant synchronization completed.');}catch(e){rt.message('Cloud login is ready. Local synchronization is pending: '+e.message);}if(auth.token&&typeof this.onCloudLogin==='function'){try{await this.onCloudLogin({api:target.api,token:auth.token,actor:auth.actor});}catch(e){rt.message('Signed in. Update registration is pending: '+e.message);}}}
    if(new URL(wc.getURL()).origin!==target.origin)throw Error('Workspace address changed during sign-in');
    const key=input.kind==='owner'?'staff_token':input.kind==='customer'?'renter_token':'pos_token';
    await wc.executeJavaScript(`(()=>{for(const key of ['staff_token','pos_token','renter_token'])localStorage.removeItem(key);localStorage.setItem(${JSON.stringify(key)},${JSON.stringify(auth.token)});})()`);
@@ -79,6 +79,7 @@ class WorkspaceLogin{
   }
   if(notify)this.onReturn({mode:entry.mode,kind:entry.kind});
  }
+ async authorizeLocalUser(){const entry=this.active,rt=this.runtime();if(!entry||entry.networkWorkspace||!['owner','pos'].includes(entry.kind)||entry.desktopContext?.store!==rt.v.databases[rt.mode])throw Error('Sign in locally to use synchronization');if(new URL(entry.webContents.getURL()).origin!==entry.origin)throw Error('Local workspace changed');const key=entry.kind==='pos'?'pos_token':'staff_token',token=await entry.webContents.executeJavaScript('localStorage.getItem('+JSON.stringify(key)+')');const actor=await jsonRequest(entry.api,'/auth/staff/me',{token});if(actor.id!==entry.actor.id||!['owner','manager','staff'].includes(actor.role))throw Error('Local business identity required');return actor;}
  async authorizeOwner(){const entry=this.active,rt=this.runtime();if(!entry||entry.networkWorkspace||entry.kind!=='owner'||entry.desktopContext?.store!==rt.v.databases[rt.mode])throw Error('Sign in locally as Business Owner to use local tools');
   if(new URL(entry.webContents.getURL()).origin!==entry.origin)throw Error('Local workspace changed');const token=await entry.webContents.executeJavaScript('localStorage.getItem("staff_token")');
   const actor=await jsonRequest(entry.api,'/auth/staff/me',{token});if(actor.id!==entry.actor.id||actor.role!=='owner')throw Error('Local owner access required');return actor;
