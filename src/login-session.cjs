@@ -29,6 +29,27 @@ async function authenticate(api,input,fetcher=fetch){
  if(input.kind==='pos'){const session=await jsonRequest(api,'/pos/session',{token:result.accessToken},fetcher);if(session.workflowId!==input.workflow.id)throw Error('POS workflow changed; sign in again');}
  return {token:result.accessToken,actor};
 }
+// Electron rejects loadURL with ERR_ABORTED whenever the page answers with a redirect,
+// even though the navigation itself succeeded. The workspace login routes redirect
+// (/business-login, /staff-login and /pos-login all 307 to /user-login?portal=...), so
+// only treat the abort as a failure when the view did not land on the workspace origin.
+async function loadWorkspace(wc,url,origin,{timeoutMs=20000}={}){
+ let lastStatus=200,timer;
+ const trackStatus=(_event,_url,code)=>{lastStatus=code;};
+ wc.on('did-navigate',trackStatus);
+ try{
+  await Promise.race([wc.loadURL(url),new Promise((_,reject)=>{timer=setTimeout(()=>{wc.stop?.();reject(Error('ERP website did not respond. Check the server address and connection.'));},timeoutMs);})]);
+ }catch(error){
+  if(error?.code!=='ERR_ABORTED')throw error;
+  const landed=wc.isDestroyed?.()?'':wc.getURL();
+  let sameOrigin=false;try{sameOrigin=Boolean(landed)&&new URL(landed).origin===origin;}catch{}
+  if(!sameOrigin)throw error;
+ }finally{
+  clearTimeout(timer);
+  wc.removeListener?.('did-navigate',trackStatus);
+ }
+ if(lastStatus>=400)throw Error('Workspace page unavailable (HTTP '+lastStatus+'). Check the ERP website address.');
+}
 class WorkspaceLogin{
  constructor({WebContentsView,control,workspaces,runtime,cloudApi,onReturn,onCloudLogin}){Object.assign(this,{WebContentsView,control,workspaces,runtime,cloudApi,onReturn,onCloudLogin});this.active=null;this.opening=null;control.on('resize',()=>this.resize());}
  resize(){if(this.active){const [width,height]=this.control.getContentSize();this.active.view.setBounds({x:0,y:0,width,height});}}
@@ -50,8 +71,7 @@ class WorkspaceLogin{
   const guard=(event,url)=>{try{if(new URL(url).origin!==target.origin)event.preventDefault();}catch{event.preventDefault();}};
   wc.on('will-navigate',guard);wc.on('will-redirect',guard);
   if(local)wc.session.webRequest.onBeforeRequest((details,done)=>{let allow=false;try{const u=new URL(details.url);allow=u.origin===target.origin||['blob:','data:'].includes(u.protocol);}catch{}done({cancel:!allow});});
-  let lastStatus=200;wc.on('did-navigate',(_event,_url,code)=>{lastStatus=code;});
-  const load=async url=>{lastStatus=200;let timer;try{await Promise.race([wc.loadURL(url),new Promise((_,reject)=>{timer=setTimeout(()=>{wc.stop?.();reject(Error('ERP website did not respond. Check the server address and connection.'));},20000);})]);}finally{clearTimeout(timer);}if(lastStatus>=400)throw Error('Workspace page unavailable (HTTP '+lastStatus+'). Check the ERP website address.');};
+  const load=url=>loadWorkspace(wc,url,target.origin);
   try{
    // The bootstrap page only establishes this isolated web origin; never receive credentials in a remote preload.
    await load(target.origin+'/business-login');if(new URL(wc.getURL()).origin!==target.origin)throw Error('Workspace server redirected to another address');
@@ -65,7 +85,7 @@ class WorkspaceLogin{
    await load(target.origin+(input.kind==='owner'?'/dashboard':input.kind==='customer'?'/renter-portal':workflow.route));
    this.opening=null;this.active=entry;this.workspaces.add(entry);this.control.contentView.addChildView(view);this.resize();wc.focus();
    const navigate=(_event,url,mainFrame)=>{if(this.active!==entry||mainFrame===false||new URL(url).origin!==target.origin)return;const pathname=new URL(url).pathname;
-    if(['/', '/business-login','/staff-login','/pos-login','/renter-login','/customer-login/real-estate','/customer-login'].includes(pathname))this.close(entry);
+    if(['/', '/business-login','/staff-login','/pos-login','/user-login','/renter-login','/customer-login/real-estate','/customer-login'].includes(pathname))this.close(entry);
    };
    wc.on('did-navigate',navigate);wc.on('did-navigate-in-page',navigate);
    return {signedIn:true};
@@ -85,4 +105,4 @@ class WorkspaceLogin{
   const actor=await jsonRequest(entry.api,'/auth/staff/me',{token});if(actor.id!==entry.actor.id||actor.role!=='owner')throw Error('Local owner access required');return actor;
  }
 }
-module.exports={connection,credentialInput,authenticate,jsonRequest,WorkspaceLogin};
+module.exports={connection,credentialInput,authenticate,jsonRequest,loadWorkspace,WorkspaceLogin};
