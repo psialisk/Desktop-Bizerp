@@ -28,7 +28,7 @@ function render(s){current=s;
 
   $('forgotPassword').hidden=network||kind!=='owner'||!s.configured;
 
-  document.body.classList.toggle('network',network);iconText($('connectionBadge'),network?'globe2':'pc-display-horizontal',network?'NETWORK':s.mode==='training'?'LOCAL Â· TRAINING':'LOCAL Â· This computer');
+  document.body.classList.toggle('network',network);iconText($('connectionBadge'),network?'globe2':'pc-display-horizontal',network?'NETWORK':s.mode==='training'?'LOCAL · TRAINING':'LOCAL · This computer');
 
   $('localBusinessField').hidden=true;$('networkField').hidden=!network;$('networkUrl').disabled=busy;$('networkUrl').required=network;$('networkUrl').readOnly=!localErpAddress;$('networkUrl').placeholder=localErpAddress?'https://local-erp.example or http://192.168.1.20:3000':'https://bizerpsme.shop';$('localErpToggle').hidden=false;if(network&&!localErpAddress&&$('networkUrl').value!=='https://bizerpsme.shop')$('networkUrl').value='https://bizerpsme.shop';iconText($('localErpToggle'),localErpAddress?'cloud':'pc-display-horizontal',localErpAddress?'Use Business ERP cloud':'Connect Local ERP');$('workflowField').hidden=kind!=='pos';
 
@@ -38,7 +38,7 @@ function render(s){current=s;
 
   $('localBusiness').textContent=s.businessName||(s.configured?'Local business':'No local business created yet');
 
-  $('signIn').textContent=pending?'Signing inâ€¦':network?'Sign in to network':'Sign in locally';$('signIn').disabled=busy||!network&&!canLocal();
+  $('signIn').textContent=pending?'Signing in…':network?'Sign in to network':'Sign in locally';$('signIn').disabled=busy||!network&&!canLocal();
 
   iconText($('connectionToggle'),network?'pc-display-horizontal':'wifi',network?'Use local mode':'Connect to Network');$('connectionToggle').setAttribute('aria-expanded',String(network));
 
@@ -149,7 +149,7 @@ function tickRecovery(){if(!recovery)return;const remaining=Math.max(0,recovery.
 
 $('recoveryForm').onsubmit=event=>{event.preventDefault();const value={email:$('recoveryEmail').value,code:$('recoveryCode').value,password:$('recoveryPassword').value,confirmation:$('recoveryConfirmation').value};$('recoveryPassword').value='';$('recoveryConfirmation').value='';perform(async()=>{try{const result=await api.resetOwner(value);$('recoveryState').textContent=result.message;$('recoveryCode').value='';}finally{value.password='';value.confirmation='';const previous=$('recoveryState').textContent;await updateRecovery();if(previous.startsWith('Owner password reset'))$('recoveryState').textContent=previous;}});};
 
-$('openCredentials').onclick=()=>perform(async()=>{const saved=await api.openCredentials();if(!saved)return;$('recoveryEmail').value=saved.ownerEmail;$('recoveryCode').value=saved.recoveryCode;$('savedAccountEmails').textContent='Owner: '+saved.ownerEmail+(saved.cashierEmail?' Â· Cashier: '+saved.cashierEmail:'');$('savedOwnerPassword').value=saved.ownerPassword;$('savedCashierPassword').value=saved.cashierPassword||'';$('savedCashierField').hidden=!saved.cashierEmail;$('savedAccounts').hidden=false;});
+$('openCredentials').onclick=()=>perform(async()=>{const saved=await api.openCredentials();if(!saved)return;$('recoveryEmail').value=saved.ownerEmail;$('recoveryCode').value=saved.recoveryCode;$('savedAccountEmails').textContent='Owner: '+saved.ownerEmail+(saved.cashierEmail?' · Cashier: '+saved.cashierEmail:'');$('savedOwnerPassword').value=saved.ownerPassword;$('savedCashierPassword').value=saved.cashierPassword||'';$('savedCashierField').hidden=!saved.cashierEmail;$('savedAccounts').hidden=false;});
 
 if(page==='recovery')setInterval(tickRecovery,1000);
 
