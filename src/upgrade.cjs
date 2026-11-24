@@ -49,13 +49,23 @@ async function createUpgradeBackup(rt,old){
  }catch(error){await fs.rm(staging,{recursive:true,force:true}).catch(()=>{});throw error;}
 }
 
-async function upgradeStore(rt){
+async function upgradeStore(rt,options={}){
  const old=rt.v,entry=(rt.manifest.upgrades||[]).find(u=>u.fromHash===old.schemaHash&&u.toHash===rt.manifest.schemaHash);
  if(!entry)throw Error('No reviewed upgrade path for this store');
  if(!/^migrations\/[0-9a-z_-]+\.sql$/.test(entry.file))throw Error('Invalid packaged migration path');
  const sqlFile=path.join(rt.bundle,...entry.file.split('/'));if(await rt.hash(sqlFile)!==entry.migrationHash)throw Error('Packaged migration integrity failed');
  await rt.stopHttp();
  const backupRoot=await createUpgradeBackup(rt,old),created=[];
+ let cloudBackup=null;
+ // The local backup is already written and verified above; the cloud copy is an
+ // extra safety net, so a missing entitlement, offline PC or upload failure must
+ // never block the migration.
+ if(typeof options.beforeMigrate==='function'){
+  rt.message('Uploading the verified recovery backup to the cloud account');
+  try{cloudBackup=await options.beforeMigrate({backupRoot,fromVersion:entry.fromVersion||rt.manifest.version});}
+  catch(error){rt.message('Cloud backup could not be completed: '+error.message);cloudBackup={verified:false,reason:error.message};}
+  if(cloudBackup?.verified===false)rt.message('Cloud backup not uploaded ('+(cloudBackup.reason||'unavailable')+'); the local recovery backup is kept');
+ }
  try{
   rt.message('Recovery backup verified. Migrating restored copies of your local stores');
   const next=await prepareUpgrade({...old,lastUpgradeBackup:backupRoot},rt.manifest.schemaHash,async(mode)=>{
@@ -80,7 +90,7 @@ async function upgradeStore(rt){
    return {database,uploads};
   },v=>rt.secrets.save(v));
   rt.v=next;rt.upgradePending=false;rt.upgradeEntry=null;rt.lastUpgradeBackup=backupRoot;
-  rt.message('Schema upgrade verified. Automatic recovery backup saved to '+backupRoot);return {upgraded:true,backupRoot};
+  rt.message('Schema upgrade verified. Automatic recovery backup saved to '+backupRoot);return {upgraded:true,backupRoot,cloudBackup};
  }catch(error){
   for(const database of created){const client=await rt.client('postgres',true).catch(()=>null);try{if(client)await client.query('DROP DATABASE IF EXISTS "'+database+'"');}catch{}finally{await client?.end();}await fs.rm(path.join(rt.root,'uploads',database),{recursive:true,force:true}).catch(()=>{});}
   rt.message('Upgrade stopped safely. Original stores and the automatic recovery backup were retained.');throw error;
