@@ -90,7 +90,7 @@ function render(s){current=s;
 
  }
 
- if(page==='tools'){$('cloudStatus').textContent=s.cloud?.message||'Working fully offline. Business details register when the cloud service is reachable.';$('training').hidden=!s.trainingAvailable;renderUpdates(busy);if(!updatesInfo&&!updatesLoading&&!busy){updatesLoading=true;queueMicrotask(()=>loadUpdates());}}
+ if(page==='tools'){$('cloudStatus').textContent=s.cloud?.message||'Working fully offline. Business details register when the cloud service is reachable.';$('clockSkew').hidden=!s.clockSkew;$('clockSkew').textContent=s.clockSkew?s.clockSkew.message:'';$('training').hidden=!s.trainingAvailable;renderUpdates(busy);if(!updatesInfo&&!updatesLoading&&!busy){updatesLoading=true;queueMicrotask(()=>loadUpdates());}}
 
 }
 
