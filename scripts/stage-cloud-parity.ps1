@@ -40,7 +40,18 @@ foreach($route in $manifest.upgrades){
 }
 $deltaFile='migrations/130_132_fitness_profile_rates_fees.sql'
 [IO.File]::WriteAllText((Join-Path $runtime $deltaFile),$delta,$utf8)
-$manifest.upgrades+=@{recordSyncExpansion='desktop-record-sync-v1';fromVersion=$previous.version;fromHash=$previous.schemaHash;toHash=$manifest.schemaHash;file=$deltaFile;migrationHash=(Get-FileHash (Join-Path $runtime $deltaFile) -Algorithm SHA256).Hash.ToLowerInvariant()}
+# A code-only rebuild ships the schema it started from, so it must not declare an upgrade route that
+# begins at the packaged schema hash: the shipping gate rejects that, and installed clients need no
+# migration because their schema already matches. Routes are added only when the hash really moves.
+if($manifest.schemaHash -ne $previous.schemaHash){
+ if($manifest.upgrades|Where-Object{$_.fromHash -eq $previous.schemaHash}){
+  Write-Output "Schema changed; upgrade route from $($previous.version) is already declared"
+ }else{
+  $manifest.upgrades+=@{recordSyncExpansion='desktop-record-sync-v1';fromVersion=$previous.version;fromHash=$previous.schemaHash;toHash=$manifest.schemaHash;file=$deltaFile;migrationHash=(Get-FileHash (Join-Path $runtime $deltaFile) -Algorithm SHA256).Hash.ToLowerInvariant()}
+ }
+}else{
+ Write-Output 'Schema unchanged from the previous stage; no upgrade route added'
+}
 [IO.File]::WriteAllText("$runtime\manifest.json",($manifest|ConvertTo-Json -Depth 30),$utf8)
 # Never hand a stage to make-installer.ps1 until its hashes describe the files it ships.
 & node (Join-Path $repo 'scripts\verify-runtime-package.cjs') $Output --previous (Resolve-Path $Base).Path
