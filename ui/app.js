@@ -1,8 +1,8 @@
 const api=window.storeDesktop,$=id=>document.getElementById(id);
 
-const page=location.hash.slice(1)||'login';let operationLabel='Preparing local services…',current={},network=false,localErpAddress=false,kind='owner',pending=false,workflowTouched=false,recovery=null,welcome=null,recoveryLoading=false,maintenanceResult='',updatesInfo=null,updatesLoading=false,updatesError='',updateProgress=null;
+const page=['login','license','tools','recovery'].includes(location.hash.slice(1))?location.hash.slice(1):'login';let operationLabel='Preparing local services…',current={},network=false,localErpAddress=false,kind='owner',pending=false,workflowTouched=false,recovery=null,recoveryLoading=false,maintenanceResult='',updatesInfo=null,updatesLoading=false,updatesError='',updateProgress=null;
 
-for(const id of ['login','create','license','tools','recovery'])$(id+'Page').hidden=id!==page;
+for(const id of ['login','license','tools','recovery'])$(id+'Page').hidden=id!==page;
 
 if(page!=='login')document.body.classList.add('aux');
 
@@ -58,14 +58,6 @@ function render(s){current=s;
 
  }
 
- if(page==='create'){
-
-  if(s.packages?.length&&$('packageChoice').options.length!==s.packages.length){$('packageChoice').replaceChildren(...s.packages.map(p=>new Option(p.name+' Â· '+p.industry,p.id)));$('packageChoice').value='water-refilling';}
-
-  if(s.configured)for(const button of $('createForm').querySelectorAll('button[type="submit"]'))button.disabled=true;
-
- }
-
  if(page==='license'){
 
   $('licenseBusiness').textContent=s.businessName||(s.configured?'Local business':'No local business yet');$('licenseStatus').textContent=s.license?.message||(!s.configured?'Create a local business first':'Local license available');
@@ -77,8 +69,6 @@ function render(s){current=s;
   for(const id of ['licenseRequest','licenseExport','licensePreview','licenseApply'])$(id).disabled=busy||!s.initialized;
 
  }
-
- if(page==='create')$('welcomeContinue').disabled=busy||!$('savedCredentials').checked;
 
  if(page==='recovery'){
 
@@ -151,19 +141,7 @@ $('openLicense').onclick=()=>perform(()=>api.openWindow('license'));
 
 for(const button of document.querySelectorAll('.close'))button.onclick=()=>window.close();
 
-$('createForm').onsubmit=event=>{event.preventDefault();const form=new FormData(event.target),value=Object.fromEntries(form);value.training=form.has('training');for(const input of event.target.querySelectorAll('[name="password"],[name="cashierPassword"],[name="confirmation"],[name="enrollmentKey"]'))input.value='';perform(async()=>{const result=await api.setup(value);value.password='';value.cashierPassword='';if(result?.welcome){welcome=result.welcome;$('welcomeBusiness').textContent=welcome.businessName;$('welcomeOwner').textContent=welcome.ownerEmail;$('welcomeOwnerPassword').value=welcome.ownerPassword;$('welcomeCashierCard').hidden=!welcome.cashierEmail;$('welcomeCashier').textContent=welcome.cashierEmail;$('welcomeCashierPassword').value=welcome.cashierPassword;$('welcomeCode').value=welcome.recoveryCode||'';document.querySelector('.recovery-note').hidden=welcome.cloudBound;document.querySelector('#welcomeDialog .connection-badge').textContent=welcome.cloudBound?'Cloud activated Desktop':'7-day trial + 3-day grace';$('welcomeDeadline').textContent='Available until '+new Date(welcome.expiresAt).toLocaleString();$('welcomeDialog').showModal();$('createNotice').textContent='Local business created.';event.target.reset();}},'Creating the business, accounts and local storage…');};
-
 $('forgotPassword').onclick=()=>perform(()=>api.openWindow('recovery'));
-
-$('savedCredentials').onchange=()=>render(current);
-
-$('welcomeDialog').addEventListener('cancel',event=>event.preventDefault());
-
-$('saveCredentials').onclick=()=>perform(async()=>{if(await api.saveCredentials())$('welcomeFeedback').textContent='Protected credentials saved. Keep a separate safe record if you will use another Windows account.';});
-
-$('copyRecovery').onclick=()=>perform(async()=>{await api.copy(welcome.recoveryCode);$('welcomeFeedback').textContent='Recovery code copied. Store it safely.';});
-
-$('welcomeContinue').onclick=()=>perform(async()=>{if(!$('savedCredentials').checked)return;await api.clearWelcome();welcome=null;for(const id of ['welcomeOwnerPassword','welcomeCashierPassword','welcomeCode'])$(id).value='';window.close();});
 
 async function updateRecovery(){const result=await api.recoveryStatus();recovery={...result,checkedAt:Date.now()};$('recoveryState').textContent=result.message;render(current);tickRecovery();}
 
@@ -175,7 +153,7 @@ $('openCredentials').onclick=()=>perform(async()=>{const saved=await api.openCre
 
 if(page==='recovery')setInterval(tickRecovery,1000);
 
-window.addEventListener('beforeunload',()=>{welcome=null;for(const input of document.querySelectorAll('input[type="password"],#welcomeCode,#recoveryCode,#welcomeOwnerPassword,#welcomeCashierPassword,#savedOwnerPassword,#savedCashierPassword'))input.value='';});
+window.addEventListener('beforeunload',()=>{for(const input of document.querySelectorAll('input[type="password"],#recoveryCode,#savedOwnerPassword,#savedCashierPassword'))input.value='';});
 
 $('licenseExport').onclick=()=>perform(async()=>{if(await api.licenseExport())$('licenseNotice').textContent='Installation request exported. Send the .gnjrequest file to your license administrator.';});
 
@@ -207,11 +185,6 @@ $('updateApprove').onclick=()=>perform(async()=>{updatesInfo=await api.updatesAp
 $('updateInstall').onclick=()=>perform(async()=>{await api.updatesInstall();},'Installing verified update…');
 
 perform(()=>api.status(),'Preparing local services…');
-
-
-
-
-
 
 $('cloudSignup').onclick=()=>perform(()=>api.cloudSignup(),'Opening cloud registration...');
 
