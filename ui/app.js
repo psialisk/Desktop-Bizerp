@@ -14,7 +14,16 @@ function iconText(node,icon,label){const image=document.createElement('i');image
 
 function canLocal(){return current.initialized&&current.ready&&current.configured&&!current.upgradeAvailable;}
 
-function render(s){current=s;
+function seedLabel(seed){const records=Number(seed?.records)||0;
+ if(seed?.state==='running')return 'Copying cloud data into this PC…';
+ if(seed?.state==='failed')return 'Cloud copy needs attention: '+(seed.message||'synchronization failed');
+ if(seed?.state==='waiting')return 'Cloud data copied; '+(Number(seed.pending)||0)+' record(s) wait for cloud history they depend on';
+ if(seed?.state==='seeded')return 'Cloud data is on this PC'+(records?': '+records+' record(s)':'')+(seed.at?' · '+new Date(seed.at).toLocaleString():'');
+ return '';}
+
+function renderSeed(seed){const node=$('seedFloater');if(!node)return;const text=seedLabel(seed);node.hidden=!text;if(!text)return;node.dataset.state=seed.state;$('seedText').textContent=text;}
+
+function render(s){current=s;renderSeed(s.localSeed);
 
  const waiting=!!s.busy||pending;const overlay=$('loadingOverlay');overlay.hidden=!waiting;for(const main of document.querySelectorAll('main')){main.inert=waiting;main.setAttribute('aria-busy',String(waiting));}
 
