@@ -49,7 +49,7 @@ function render(s){current=s;
   $('runtimeStatus').textContent=network?(s.startupError?'Local startup is unavailable. Network sign-in is available.':''):(s.startupError?'Local startup: '+s.startupError:s.message||'');
 
   maintenancePanel.hidden=network||!s.maintenanceAvailable;
-  maintenanceCopy.textContent=maintenanceResult||(s.upgradeAvailable?'A reviewed update is ready. Desktop will save and verify a local recovery backup before migrating a restored copy.':'This local schema has no reviewed migration in this package. Save a backup and contact support for a safe migration path.');
+  maintenanceCopy.textContent=maintenanceResult||(s.upgradeAvailable?'A reviewed update is ready. Desktop saves and verifies a local recovery backup, uploads an encrypted copy to your cloud account when the licence allows it, then migrates a restored copy. The local backup is kept if the cloud copy cannot be uploaded.':'This local schema has no reviewed migration in this package. Save a backup and contact support for a safe migration path.');
   upgradeSchemaOnly.hidden=!s.upgradeAvailable;upgradeSchemaOnly.disabled=busy||!s.upgradeAvailable;
   backupOnly.hidden=!s.configured;backupOnly.disabled=busy||!s.initialized||!s.maintenanceAvailable;
   if(!s.maintenanceAvailable)maintenanceResult='';
@@ -90,7 +90,7 @@ function render(s){current=s;
 
  }
 
- if(page==='tools'){$('cloudStatus').textContent=s.cloud?.message||'Working fully offline. Business details register when the cloud service is reachable.';$('training').hidden=!s.trainingAvailable;renderUpdates(busy);if(!updatesInfo&&!updatesLoading&&!busy){updatesLoading=true;queueMicrotask(()=>loadUpdates());}}
+ if(page==='tools'){$('cloudStatus').textContent=s.cloud?.message||'Working fully offline. Business details register when the cloud service is reachable.';$('clockSkew').hidden=!s.clockSkew;$('clockSkew').textContent=s.clockSkew?s.clockSkew.message:'';$('training').hidden=!s.trainingAvailable;renderUpdates(busy);if(!updatesInfo&&!updatesLoading&&!busy){updatesLoading=true;queueMicrotask(()=>loadUpdates());}}
 
 }
 
@@ -101,23 +101,25 @@ function renderUpdates(busy){
  const release=info.release;
  const download=info.download;
  const backup=info.backup;
+ const snapshot=info.snapshot;
  let text=updatesError||info.error||'';
  if(!text){
   if(!updatesInfo)text='Loading update status…';
   else if(!linked)text='This PC is not registered for updates yet. Sign in online once as the business owner to link it.';
   else if(release)text='Version '+info.currentVersion+' is installed. Update '+release.version+' is available'+(release.mandatory?' and is required':'')+'.';
   else text='Version '+info.currentVersion+' is installed. No newer compatible update is available.';
-  if(download?.ready)text+=' Update downloaded'+(backup?.status==='verified'?' and a cloud-verified backup exists.':' — create and verify the backup next.');
-  if(backup?.status==='verified'&&info.restartApproved)text+=' Restart approved; install is ready.';
-  else if(backup?.status==='verified'&&!info.restartApproved)text+=' The backup is verified. Approve the restart to install.';
+  if(download?.ready)text+=' Update downloaded'+(snapshot?.verified?' and a verified local snapshot exists'+(backup?.status==='verified'?' (also uploaded to the cloud).':'.'):' — create and verify the local snapshot next.');
+  if(snapshot?.verified&&info.restartApproved)text+=' Restart approved; install is ready.';
+  else if(snapshot?.verified&&!info.restartApproved)text+=' The local snapshot is verified. Approve the restart to install.';
+  if(snapshot?.verified&&backup?.status==='not_uploaded')text+=' The cloud copy was skipped; the local snapshot is enough to install.';
   if(info.blockedReason&&release)text+=' '+info.blockedReason;
  }
  $('updatesStatus').textContent=text;
  $('updatesError').hidden=!(updatesError||info.error);$('updatesError').textContent=updatesError||info.error||'';
  $('updateCheck').hidden=!linked;$('updateCheck').disabled=!!busy;
  $('updateDownload').hidden=!release||!!download?.ready;$('updateDownload').disabled=!!busy;
- $('updateBackup').hidden=!download?.ready||backup?.status==='verified';$('updateBackup').disabled=!!busy;
- $('updateApprove').hidden=backup?.status!=='verified'||!!info.restartApproved;$('updateApprove').disabled=!!busy;
+ $('updateBackup').hidden=!download?.ready||!!snapshot?.verified;$('updateBackup').disabled=!!busy;
+ $('updateApprove').hidden=!snapshot?.verified||!!info.restartApproved;$('updateApprove').disabled=!!busy;
  $('updateInstall').hidden=!info.restartApproved;$('updateInstall').disabled=!!busy||!info.installReady;
  const progress=$('updateProgress');
  const active=updateProgress!==null&&updateProgress<100;
@@ -189,19 +191,20 @@ $('licensePreview').onclick=()=>perform(async()=>{const claims=await api.license
 
 $('licenseApply').onclick=()=>perform(async()=>{const result=await api.licenseApply($('licenseKey').value.trim());if(result){$('licenseApply').hidden=true;$('licenseKey').value='';$('licenseChanges').hidden=true;$('licenseNotice').textContent='License applied. Business records preserved.';}});
 
-upgradeSchemaOnly.onclick=()=>perform(()=>api.upgrade(),'Backing up and upgrading…');backupOnly.onclick=()=>perform(async()=>{const saved=await api.maintenanceBackup();if(saved)maintenanceResult='Backup saved to '+saved+'. The local schema was not changed.';},'Creating backup only…');$('live').onclick=()=>perform(()=>api.switchMode('live'));$('training').onclick=()=>perform(()=>api.switchMode('training'));$('restart').onclick=()=>perform(()=>api.restart());$('backup').onclick=()=>perform(()=>api.backup());$('restore').onclick=()=>perform(()=>api.restore());$('rebuildCloud').onclick=()=>perform(()=>api.rebuildCloudSnapshot());
+upgradeSchemaOnly.onclick=()=>perform(()=>api.upgrade(),'Backing up and upgrading…');backupOnly.onclick=()=>perform(async()=>{const saved=await api.maintenanceBackup();if(saved)maintenanceResult='Backup saved to '+saved+'. The local schema was not changed.';},'Creating backup only…');$('live').onclick=()=>perform(()=>api.switchMode('live'));$('training').onclick=()=>perform(()=>api.switchMode('training'));$('restart').onclick=()=>perform(()=>api.restart());$('backup').onclick=()=>perform(()=>api.backup());$('restore').onclick=()=>perform(()=>api.restore());$('cloudRestore').onclick=()=>perform(()=>api.cloudRestore());$('rebuildCloud').onclick=()=>perform(()=>api.rebuildCloudSnapshot());
 
 api.onUpdatesProgress?.(value=>{
  if(!value)return;
  if(value.phase==='download'){updateProgress=Number(value.percent)||0;const bar=$('updateProgress');if(bar){bar.hidden=false;bar.value=updateProgress;}$('updatesStatus').textContent='Downloading update… '+updateProgress+'%';}
- else if(value.phase==='backup'){updatesError='';$('updatesStatus').textContent=value.status==='verified'?'Backup verified by the cloud service.':value.status==='uploading'?'Uploading encrypted backup…':'Creating encrypted backup…';}
+ else if(value.phase==='backup'){updatesError='';$('updatesStatus').textContent=value.status==='verified'?(value.scope==='local'?'Local snapshot verified.':'Cloud backup verified.'):value.status==='local_only'?'Cloud copy skipped; the local snapshot is verified.':value.status==='uploading'?'Uploading encrypted cloud copy…':value.status==='verifying'?'Verifying the local snapshot…':'Creating the local snapshot…';}
  else if(value.phase==='installing'){$('updatesStatus').textContent='Installing version '+value.version+' and restarting…';}
+  else if(value.phase==='restore'){$('updatesStatus').textContent=value.status==='downloading'?'Downloading the verified cloud backup…':value.status==='restoring'?'Restoring into a new local database…':value.status==='restored'?'Cloud backup restored.':'Checking the cloud backup…';}
  else if(value.phase==='linked'||value.phase==='checked'||value.phase==='downloaded'||value.phase==='approved'){void loadUpdates();}
 });
 
 $('updateCheck').onclick=()=>perform(async()=>{updatesError='';updateProgress=null;updatesInfo=await api.updatesCheck();},'Checking for updates…');
 $('updateDownload').onclick=()=>perform(async()=>{updatesError='';updateProgress=0;updatesInfo=await api.updatesDownload();updateProgress=null;},'Downloading update…');
-$('updateBackup').onclick=()=>perform(async()=>{updatesError='';updatesInfo=await api.updatesBackup();},'Creating and verifying encrypted backup…');
+$('updateBackup').onclick=()=>perform(async()=>{updatesError='';updatesInfo=await api.updatesBackup();},'Creating and verifying the local snapshot…');
 $('updateApprove').onclick=()=>perform(async()=>{updatesInfo=await api.updatesApproveRestart();},'Approving restart…');
 $('updateInstall').onclick=()=>perform(async()=>{await api.updatesInstall();},'Installing verified update…');
 

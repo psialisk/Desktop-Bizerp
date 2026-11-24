@@ -10,6 +10,10 @@ if($InstallerDirectory -notmatch '^installers(?:-[a-zA-Z0-9.-]+)?$'){throw 'Inva
 $portable=(Resolve-Path $PortableApp).Path
 $required=@('Business ERP Desktop.exe','icudtl.dat','resources.pak','chrome_100_percent.pak','locales\en-US.pak','resources\app\package.json','resources\runtime\manifest.json','resources\runtime\node\node.exe')
 foreach($relative in $required){if(-not(Test-Path (Join-Path $portable $relative))){throw "Portable desktop package is incomplete; missing $relative"}}
+# Last gate before anything ships: the packaged runtime must carry the 120-133 delta and
+# upgrade routes whose recorded hashes still match the migration files inside the package.
+& node (Join-Path $PSScriptRoot 'verify-runtime-package.cjs') $portable
+if($LASTEXITCODE -ne 0){throw 'Portable desktop package failed the runtime shipping gate; refusing to build an installer from it'}
 $out=Join-Path $repo ('artifacts\'+$InstallerDirectory)
 if(Test-Path $out){$existing=Get-ChildItem $out -File -ErrorAction SilentlyContinue;if($existing){throw "Installer output already exists at $out; retain it and choose a new output directory before rebuilding."}}
 Push-Location $repo

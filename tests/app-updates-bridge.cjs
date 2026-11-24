@@ -87,7 +87,7 @@ const { registerAppUpdates } = require('../src/app-updates-bridge.cjs');
       await fsp.mkdir(destination, { recursive: true });
       const data = Buffer.from('PGDMP bridge test');
       await fsp.writeFile(path.join(destination, 'database.dump'), data);
-      await fsp.writeFile(path.join(destination, 'manifest.json'), JSON.stringify({ format: 1, files: [{ name: 'database.dump', hash: createHash('sha256').update(data).digest('hex'), size: data.length }] }));
+      await fsp.writeFile(path.join(destination, 'manifest.json'), JSON.stringify({ format: 1, mode: 'live', files: [{ name: 'database.dump', hash: createHash('sha256').update(data).digest('hex'), size: data.length }] }));
       return destination;
     },
   };
@@ -137,7 +137,7 @@ const { registerAppUpdates } = require('../src/app-updates-bridge.cjs');
   assert.deepEqual(await fsp.readFile(path.join(root, 'app-updates', 'BusinessERP-Desktop-0.4.24-Setup.exe')), installer);
   assert.ok(progress.some(value => value.phase === 'download' && value.percent === 0));
   assert.ok(progress.some(value => value.phase === 'download' && value.percent === 100));
-  await assert.rejects(call('updates:install'), /verified cloud backup/);
+  await assert.rejects(call('updates:install'), /verified local snapshot/);
   assert.equal(launched, null);
 
   const backedUp = await call('updates:backup');
@@ -164,17 +164,22 @@ const { registerAppUpdates } = require('../src/app-updates-bridge.cjs');
   assert.equal(finished, 1);
   assert.equal(launched, path.join(root, 'app-updates', 'BusinessERP-Desktop-0.4.24-Setup.exe'));
 
-  // A cloud backup that failed verification never unlocks install, even when
-  // the owner approves the restart.
+  // A cloud upload that fails never blocks the update: the verified local
+  // snapshot is the install gate.
   backupMode = 'failed';
   releaseRound = 2;
   const checkedAgain = await call('updates:check');
   assert.equal(checkedAgain.download, null);
   await call('updates:download');
-  await assert.rejects(call('updates:backup'), /not verified/);
+  const fellBack = await call('updates:backup');
+  assert.equal(fellBack.snapshot.verified, true, 'the local snapshot unlocks install without a cloud copy');
+  assert.equal(fellBack.backup.status, 'not_uploaded');
+  assert.match(fellBack.backup.reason, /verified local snapshot is used/);
   dialogAnswer = 1;
-  await assert.rejects(call('updates:approve-restart'), /verified cloud backup/);
-  await assert.rejects(call('updates:install'), /verified cloud backup/);
+  const offlineApproved = await call('updates:approve-restart');
+  assert.equal(offlineApproved.installReady, true);
+  const offlineInstalled = await call('updates:install');
+  assert.equal(offlineInstalled.installing, true);
 
   // Without a cloud sign-in a perpetual Desktop licence registers itself from its
   // signed grant and a fresh device-key proof; no staff JWT is involved.
