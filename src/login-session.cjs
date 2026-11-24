@@ -53,7 +53,7 @@ async function loadWorkspace(wc,url,origin,{timeoutMs=20000}={}){
 // "Invalid credentials" alone cannot tell an owner whether the password, the signed grant, the licence or the
 // cloud check refused them, so a local refusal names its gate and says what to do about that one.
 const gates={grant:'the signed Desktop grant for this PC',licence:'the Desktop licence in the signed grant',cloud:'the cloud owner check',account:'this business account or its password'};
-function localSignInFailure(e){const detail=String(e?.message||e||'Sign-in failed'),label=gates[e?.gate];if(!label)return detail;
+function localSignInFailure(e){const detail=String(e?.message||e||'Sign-in failed');if(e?.localState)return detail;const label=gates[e?.gate];if(!label)return detail;
  if(e.gate==='account')return 'Local sign-in refused by '+label+': '+detail+'. Signing in once through Connect to Network rewrites this account with the password the cloud accepts; use that same password here afterwards.';
  return 'Local sign-in refused by '+label+': '+detail;}
 class WorkspaceLogin{
@@ -82,8 +82,8 @@ class WorkspaceLogin{
    // The bootstrap page only establishes this isolated web origin; never receive credentials in a remote preload.
    await load(target.origin+'/business-login');if(new URL(wc.getURL()).origin!==target.origin)throw Error('Workspace server redirected to another address');
    const installationId=await wc.executeJavaScript(`(()=>{let id=localStorage.getItem('business_erp_pos_installation');if(!/^[a-f0-9-]{36}$/i.test(id||'')){id=${JSON.stringify(randomUUID())};localStorage.setItem('business_erp_pos_installation',id);}return id})()`);
-   if(local&&rt.v.cloudBinding)await require('./cloud-staff.cjs').prepareLogin(rt,input);
-   let auth;try{auth=await authenticate(target.api,{...input,workflow,installationId});}catch(e){if(!e.gate)e.gate='account';throw e;}entry.actor=auth.actor;if(local)require('./tenant-sync.cjs').requestSync(rt);if(!local&&input.kind==='owner'){try{const prepared=await require('./tenant-sync.cjs').cloudLogin(rt,input,auth,target.api);if(prepared)rt.message('Cloud login and local tenant synchronization completed.');}catch(e){rt.message('Cloud login is ready. Local synchronization is pending: '+e.message);}if(auth.token&&typeof this.onCloudLogin==='function'){try{await this.onCloudLogin({api:target.api,token:auth.token,actor:auth.actor});}catch(e){rt.message('Signed in. Update registration is pending: '+e.message);}}}
+   if(local){const credentials=require('./local-credentials.cjs'),check=await credentials.state(rt,input);if(check.state!=='ready')throw credentials.failure(check.state,check);await require('./cloud-staff.cjs').verifyLocalAccess(rt,input);}
+   let auth;try{auth=await authenticate(target.api,{...input,workflow,installationId});}catch(e){if(local&&e.status===401)throw require('./local-credentials.cjs').failure('wrong_secret',{identifier:input.email});if(local&&e.status===403){const refused=Error(String(e.message||'The local backend refused this account'));refused.localState='enrollment';throw refused;}if(!e.gate)e.gate='account';throw e;}entry.actor=auth.actor;if(local)require('./tenant-sync.cjs').requestSync(rt);if(!local&&input.kind==='owner'){try{const prepared=await require('./tenant-sync.cjs').cloudLogin(rt,input,auth,target.api);if(prepared)rt.message('Cloud login and local tenant synchronization completed.');}catch(e){rt.message('Cloud login is ready. Local synchronization is pending: '+e.message);}if(auth.token&&typeof this.onCloudLogin==='function'){try{await this.onCloudLogin({api:target.api,token:auth.token,actor:auth.actor});}catch(e){rt.message('Signed in. Update registration is pending: '+e.message);}}}
    if(new URL(wc.getURL()).origin!==target.origin)throw Error('Workspace address changed during sign-in');
    const key=input.kind==='owner'?'staff_token':input.kind==='customer'?'renter_token':'pos_token';
    await wc.executeJavaScript(`(()=>{for(const key of ['staff_token','pos_token','renter_token'])localStorage.removeItem(key);localStorage.setItem(${JSON.stringify(key)},${JSON.stringify(auth.token)});})()`);
@@ -91,7 +91,7 @@ class WorkspaceLogin{
    await load(target.origin+(input.kind==='owner'?'/dashboard':input.kind==='customer'?'/renter-portal':workflow.route));
    this.opening=null;this.active=entry;this.workspaces.add(entry);this.control.contentView.addChildView(view);this.resize();wc.focus();
    const navigate=(_event,url,mainFrame)=>{if(this.active!==entry||mainFrame===false||new URL(url).origin!==target.origin)return;const pathname=new URL(url).pathname;
-    if(['/', '/business-login','/staff-login','/pos-login','/user-login','/renter-login','/customer-login/real-estate','/customer-login'].includes(pathname))this.close(entry);
+    if(['/', '/business-login','/staff-login','/pos-login','/user-login','/renter-login','/customer-login/real-estate','/customer-login'].includes(pathname)){rt.message('The workspace asked for a sign-in again after Desktop signed in, so this local session was not accepted.');this.close(entry);}
    };
    wc.on('did-navigate',navigate);wc.on('did-navigate-in-page',navigate);
    return {signedIn:true};
