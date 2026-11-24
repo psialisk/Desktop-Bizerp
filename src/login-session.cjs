@@ -50,6 +50,12 @@ async function loadWorkspace(wc,url,origin,{timeoutMs=20000}={}){
  }
  if(lastStatus>=400)throw Error('Workspace page unavailable (HTTP '+lastStatus+'). Check the ERP website address.');
 }
+// "Invalid credentials" alone cannot tell an owner whether the password, the signed grant, the licence or the
+// cloud check refused them, so a local refusal names its gate and says what to do about that one.
+const gates={grant:'the signed Desktop grant for this PC',licence:'the Desktop licence in the signed grant',cloud:'the cloud owner check',account:'this business account or its password'};
+function localSignInFailure(e){const detail=String(e?.message||e||'Sign-in failed'),label=gates[e?.gate];if(!label)return detail;
+ if(e.gate==='account')return 'Local sign-in refused by '+label+': '+detail+'. Signing in once through Connect to Network rewrites this account with the password the cloud accepts; use that same password here afterwards.';
+ return 'Local sign-in refused by '+label+': '+detail;}
 class WorkspaceLogin{
  constructor({WebContentsView,control,workspaces,runtime,cloudApi,onReturn,onCloudLogin}){Object.assign(this,{WebContentsView,control,workspaces,runtime,cloudApi,onReturn,onCloudLogin});this.active=null;this.opening=null;control.on('resize',()=>this.resize());}
  resize(){if(this.active){const [width,height]=this.control.getContentSize();this.active.view.setBounds({x:0,y:0,width,height});}}
@@ -77,7 +83,7 @@ class WorkspaceLogin{
    await load(target.origin+'/business-login');if(new URL(wc.getURL()).origin!==target.origin)throw Error('Workspace server redirected to another address');
    const installationId=await wc.executeJavaScript(`(()=>{let id=localStorage.getItem('business_erp_pos_installation');if(!/^[a-f0-9-]{36}$/i.test(id||'')){id=${JSON.stringify(randomUUID())};localStorage.setItem('business_erp_pos_installation',id);}return id})()`);
    if(local&&rt.v.cloudBinding)await require('./cloud-staff.cjs').prepareLogin(rt,input);
-   const auth=await authenticate(target.api,{...input,workflow,installationId});entry.actor=auth.actor;if(local)require('./tenant-sync.cjs').requestSync(rt);if(!local&&input.kind==='owner'){try{const prepared=await require('./tenant-sync.cjs').cloudLogin(rt,input,auth,target.api);if(prepared)rt.message('Cloud login and local tenant synchronization completed.');}catch(e){rt.message('Cloud login is ready. Local synchronization is pending: '+e.message);}if(auth.token&&typeof this.onCloudLogin==='function'){try{await this.onCloudLogin({api:target.api,token:auth.token,actor:auth.actor});}catch(e){rt.message('Signed in. Update registration is pending: '+e.message);}}}
+   let auth;try{auth=await authenticate(target.api,{...input,workflow,installationId});}catch(e){if(!e.gate)e.gate='account';throw e;}entry.actor=auth.actor;if(local)require('./tenant-sync.cjs').requestSync(rt);if(!local&&input.kind==='owner'){try{const prepared=await require('./tenant-sync.cjs').cloudLogin(rt,input,auth,target.api);if(prepared)rt.message('Cloud login and local tenant synchronization completed.');}catch(e){rt.message('Cloud login is ready. Local synchronization is pending: '+e.message);}if(auth.token&&typeof this.onCloudLogin==='function'){try{await this.onCloudLogin({api:target.api,token:auth.token,actor:auth.actor});}catch(e){rt.message('Signed in. Update registration is pending: '+e.message);}}}
    if(new URL(wc.getURL()).origin!==target.origin)throw Error('Workspace address changed during sign-in');
    const key=input.kind==='owner'?'staff_token':input.kind==='customer'?'renter_token':'pos_token';
    await wc.executeJavaScript(`(()=>{for(const key of ['staff_token','pos_token','renter_token'])localStorage.removeItem(key);localStorage.setItem(${JSON.stringify(key)},${JSON.stringify(auth.token)});})()`);
@@ -89,7 +95,7 @@ class WorkspaceLogin{
    };
    wc.on('did-navigate',navigate);wc.on('did-navigate-in-page',navigate);
    return {signedIn:true};
-  }catch(e){this.opening=null;await this.close(entry,false);throw Error(e.message?.startsWith('Sign-in')?e.message:e.message||'Could not open the workspace');}
+  }catch(e){this.opening=null;await this.close(entry,false);throw Error(local?localSignInFailure(e):(e.message?.startsWith('Sign-in')?e.message:e.message||'Could not open the workspace'));}
  }
  async close(entry=this.active,notify=true){if(!entry)return;this.workspaces.delete(entry);if(this.active===entry){this.control.contentView.removeChildView(entry.view);this.active=null;}
   if(!entry.webContents.isDestroyed()){
@@ -105,4 +111,4 @@ class WorkspaceLogin{
   const actor=await jsonRequest(entry.api,'/auth/staff/me',{token});if(actor.id!==entry.actor.id||actor.role!=='owner')throw Error('Local owner access required');return actor;
  }
 }
-module.exports={connection,credentialInput,authenticate,jsonRequest,loadWorkspace,WorkspaceLogin};
+module.exports={connection,credentialInput,authenticate,jsonRequest,loadWorkspace,WorkspaceLogin,localSignInFailure};
