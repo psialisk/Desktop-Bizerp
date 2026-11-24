@@ -27,7 +27,19 @@ async function saveProfile(rt){const id=rt.v.cloudBinding?.tenantId||(rt.v.datab
 async function selectProfile(rt,id){if(rt.v.cloudBinding?.tenantId===id){await migrate(rt);return;}await saveProfile(rt);await rt.stopHttp();const saved=rt.v.cloudProfiles?.[id];for(const k of profileKeys)delete rt.v[k];Object.assign(rt.v,saved||{databases:{},uploads:{},schemaHash:rt.manifest.schemaHash});await rt.secrets.save(rt.v);await migrate(rt);}
 async function selectOffline(rt,identifier){if(!rt.v.cloudProfiles)return;const current=rt.v.cloudProfiles[rt.v.cloudBinding?.tenantId];if([rt.v.localBusiness?.ownerEmail,...(current?.identifiers||[])].some(s=>s&&normalized(s)===normalized(identifier)))return;const entry=Object.entries(rt.v.cloudProfiles).find(([,p])=>(p.identifiers||[]).some(s=>normalized(s)===normalized(identifier)));if(entry&&entry[0]!==rt.v.cloudBinding?.tenantId){await selectProfile(rt,entry[0]);await rt.start('live');}}
 async function exchange(rt,events=[],cursor='0',historyKey=null){const b=rt.v.cloudBinding,payload={events,cursor,historyKey};return protocol.request(b.api,'/desktop-local/records',{body:{...protocol.proof(b.identity,'recheck',{activationId:b.activationId,payloadHash:crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex'),...(b.syncActorGrant?{actorGrant:b.syncActorGrant}:{})}),...payload}});}
-async function applyPending(rt,c,pending){const {applyDesktopEvents}=require(path.join(rt.bundle,'backend/dist/common/desktop-record-sync'));const db={query:async(s,p)=>(await c.query(s,p)).rows};let todo=[...pending].sort((a,b)=>Date.parse(b.event_at)-Date.parse(a.event_at)||String(b.device_id).localeCompare(String(a.device_id))||String(b.event_id).localeCompare(String(a.event_id)));await c.query('BEGIN');try{while(todo.length){const next=[];let progress=0;for(const e of todo){await c.query('SAVEPOINT sync_row');try{await applyDesktopEvents(db,rt.v.cloudBinding.tenantId,[e],true);await c.query('RELEASE SAVEPOINT sync_row');progress++;}catch(err){await c.query('ROLLBACK TO SAVEPOINT sync_row');if(['23503','P0001'].includes(err.code)){e.syncDependencyError=err.message;next.push(e);}else throw err;}}if(!progress)throw Error('Sync could not apply '+todo[0].table_name+': '+(todo[0].syncDependencyError||'referenced records are unavailable')+'. Pending changes are retained');todo=next;}await c.query('COMMIT');}catch(e){await c.query('ROLLBACK');throw e;}}
+// Every record that can be applied is committed; only the rows still missing a parent stay queued, so one
+// orphan cannot keep the rest of the cloud history out of the local copy.
+async function applyPending(rt,c,pending){const {applyDesktopEvents}=require(path.join(rt.bundle,'backend/dist/common/desktop-record-sync'));const db={query:async(s,p)=>(await c.query(s,p)).rows};let todo=[...pending].sort((a,b)=>Date.parse(b.event_at)-Date.parse(a.event_at)||String(b.device_id).localeCompare(String(a.device_id))||String(b.event_id).localeCompare(String(a.event_id)));
+ while(todo.length){const deferred=[];
+  await c.query('BEGIN');
+  try{for(const e of todo){await c.query('SAVEPOINT sync_row');try{await applyDesktopEvents(db,rt.v.cloudBinding.tenantId,[e],true);await c.query('RELEASE SAVEPOINT sync_row');}catch(err){await c.query('ROLLBACK TO SAVEPOINT sync_row');if(['23503','P0001'].includes(err.code)){e.syncDependencyError=err.message;deferred.push(e);}else throw err;}}
+   await c.query('COMMIT');
+  }catch(e){await c.query('ROLLBACK');throw e;}
+  if(!deferred.length)return [];
+  // Nothing moved in this pass: the parent is not in the journal at all, so only these rows keep waiting.
+  if(deferred.length===todo.length)return deferred;
+  todo=deferred;}
+ return [];}
 // The sync position is kept in the local database next to the journal, so losing the small state file
 // on disk cannot make the Desktop upload work the cloud already has.
 const checkpointTable="CREATE TABLE IF NOT EXISTS desktop_sync_checkpoint(tenant_id uuid NOT NULL,actor_key text NOT NULL,device_id uuid NOT NULL,cursor text NOT NULL,uploaded bigint NOT NULL DEFAULT 0,updated_at timestamptz NOT NULL DEFAULT now(),PRIMARY KEY(tenant_id,actor_key))";
@@ -67,7 +79,7 @@ async function synchronize(rt){if(rt.tenantSyncRunning)return;const b=rt.v.cloud
  const save=async()=>{const temp=file+'.tmp';await fs.writeFile(temp,JSON.stringify(state));await fs.rename(temp,file);if(!state.pending.length)await saveCheckpoint(rt,c,b,state);};
  // Download the complete dependency set before applying; the cursor and pending payload are persisted together.
  let complete=false;while(!complete){const page=await exchange(rt,[],state.cursor);serverTime=Date.parse(page.serverTime);state.pending.push(...page.events);state.cursor=page.cursor;await save();complete=page.complete;}
- if(state.pending.length){await applyPending(rt,c,state.pending);state.pending=[];await save();}
+ if(state.pending.length){state.pending=await applyPending(rt,c,state.pending);await save();}
  // A clock that ran ahead leaves queued rows future-dated and refused; shift them onto the cloud timeline first.
  if(Number.isFinite(serverTime)){const retimed=await require(path.join(rt.bundle,'backend/dist/common/desktop-record-sync')).retimeFutureEvents({query:async(s,p)=>(await c.query(s,p)).rows},b.tenantId,b.identity.installationId,state.uploaded,new Date(serverTime));if(retimed.count)repaired={skewMs:retimed.skewMs,at:new Date().toISOString(),retimed:retimed.count,message:'This computer clock was '+skewText(retimed.skewMs)+' the cloud time, so '+retimed.count+' queued record(s) were re-timestamped to the cloud time and synchronization resumed. Correct the system clock so new records keep their real time.'};}
  // Only locally recorded business events are uploaded; replayed cloud references and license/credential state never upload.
@@ -76,9 +88,9 @@ async function synchronize(rt){if(rt.tenantSyncRunning)return;const b=rt.v.cloud
   const first=(await c.query(pendingSQL('e.*',' ORDER BY e.sequence LIMIT 1'),args)).rows[0];if(!first)break;
   const group=first.transaction_id;const rows=(await c.query(pendingSQL('e.*',' AND '+(group?'e.transaction_id=$5':'e.sequence=$5::bigint')+' ORDER BY e.sequence'),[...args,group||first.sequence])).rows;
   if(rows.length>1000||Buffer.byteLength(JSON.stringify(rows))>1500000)throw Error('A transaction exceeds the sync batch limit; its records remain saved');
-  const result=await exchange(rt,rows,state.cursor);clockSkew=pickClockSkew(clockSkew,result.outcomes);state.uploaded=String(rows.at(-1).sequence);state.pending.push(...result.events);state.cursor=result.cursor;await save();if(state.pending.length){await applyPending(rt,c,state.pending);state.pending=[];await save();}
+  const result=await exchange(rt,rows,state.cursor);clockSkew=pickClockSkew(clockSkew,result.outcomes);state.uploaded=String(rows.at(-1).sequence);state.pending.push(...result.events);state.cursor=result.cursor;await save();if(state.pending.length){state.pending=await applyPending(rt,c,state.pending);await save();}
  }
- rt.clockSkew=clockSkewState(clockSkew)||repaired;rt.syncSummary='Cloud and local records synchronized. History is retained for every received version.';
+ rt.clockSkew=clockSkewState(clockSkew)||repaired;rt.syncSummary=state.pending.length?'Cloud and local records synchronized; '+state.pending.length+' cloud record(s) wait for records the cloud never journaled.':'Cloud and local records synchronized. History is retained for every received version.';
  }finally{await c.end();rt.tenantSyncRunning=false;if(rt.tenantSyncAgain){rt.tenantSyncAgain=false;requestSync(rt);}}}
 function start(rt){stop(rt);if(!rt.v.cloudBinding)return;
  // A journal probe every two seconds starts synchronization seconds after a local write; the thirty second
