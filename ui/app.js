@@ -44,8 +44,6 @@ function render(s){current=s;
 
   $('modeNote').textContent=network?'Network login opens the selected server workspace':'Works without internet';
 
-  $('createBusiness').hidden=network;$('linkDivider').hidden=network;$('createBusiness').disabled=busy||!s.initialized||s.configured||s.upgradeAvailable;
-
   $('runtimeStatus').textContent=network?(s.startupError?'Local startup is unavailable. Network sign-in is available.':''):(s.startupError?'Local startup: '+s.startupError:s.message||'');
 
   maintenancePanel.hidden=network||!s.maintenanceAvailable;
@@ -149,7 +147,7 @@ window.addEventListener('blur',()=>{for(const input of document.querySelectorAll
 
 $('loginForm').onsubmit=event=>{event.preventDefault();const value={mode:network?'network':'local',kind,email:$('email').value,password:$('password').value,server:$('networkUrl').value,workflowId:$('workflow').value};$('password').value='';$('password').type='password';$('showPassword').textContent='Show';perform(()=>api.login(value),network?'Connecting and signing in…':'Opening your local workspace…');};
 
-$('createBusiness').onclick=()=>perform(()=>api.openWindow('create'));$('openLicense').onclick=()=>perform(()=>api.openWindow('license'));
+$('openLicense').onclick=()=>perform(()=>api.openWindow('license'));
 
 for(const button of document.querySelectorAll('.close'))button.onclick=()=>window.close();
 

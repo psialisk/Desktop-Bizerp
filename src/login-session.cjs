@@ -55,7 +55,7 @@ class WorkspaceLogin{
  resize(){if(this.active){const [width,height]=this.control.getContentSize();this.active.view.setBounds({x:0,y:0,width,height});}}
  async login(raw){
   const input=credentialInput(raw);if(this.active||this.opening)throw Error('Sign out of the current workspace first');
-  const local=input.mode==='local',rt=this.runtime();if(local)await require('./tenant-sync.cjs').selectOffline(rt,input.email);if(local&&!rt.ready)throw Error('Local business is not ready. Create the business or wait for startup.');
+  const local=input.mode==='local',rt=this.runtime();if(local)await require('./tenant-sync.cjs').selectOffline(rt,input.email);if(local&&!rt.ready)throw Error('This PC has no local business ready. Connect to the network once to prepare it here, or wait for local startup.');
   const target=local?{origin:rt.status().url,api:rt.status().url+'/api'}:connection(input.server,this.cloudApi);
   const workflows=require(require('node:path').join(rt.bundle,'backend/dist/modules/foundation/catalog.json')).counterWorkflows.filter(w=>w.status==='ready');
   const workflow=workflows.find(w=>w.id===input.workflowId)||workflows.find(w=>w.id===(local&&rt.v.localBusiness?.packageId==='water-refilling'?'water-desk':'retail'));
