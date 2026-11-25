@@ -5,19 +5,23 @@ $backend='D:\GitHub\bizerp.gnj\backend'
 $frontend='D:\GitHub\bizerp.gnj.fe\frontend'
 if(Test-Path $Output){throw 'Output exists; preserve earlier artifacts'}
 function CopyTree($from,$to){& robocopy $from $to /E /XF .env* /MT:8 /NFL /NDL /NJH /NJS /NP /R:1 /W:1 | Out-Null;if($LASTEXITCODE -gt 7){throw "Copy failed: $from"}}
+# Overlays mirror instead of merge: a file that no longer exists in the source (an old
+# Next chunk, a renamed module, a deleted migration) must not survive from the base stage
+# and ship inside the next package. /MIR deletes destination extras; .env* is excluded.
+function MirrorTree($from,$to){& robocopy $from $to /MIR /XF .env* /MT:8 /NFL /NDL /NJH /NJS /NP /R:1 /W:1 | Out-Null;if($LASTEXITCODE -gt 7){throw "Mirror failed: $from"}}
 CopyTree $Base $Output
 $runtime=Join-Path $Output 'resources\runtime'
 $previous=Get-Content "$runtime\manifest.json" -Raw|ConvertFrom-Json
-CopyTree "$repo\src" "$Output\resources\app\src"
-CopyTree "$repo\ui" "$Output\resources\app\ui"
+MirrorTree "$repo\src" "$Output\resources\app\src"
+MirrorTree "$repo\ui" "$Output\resources\app\ui"
 Copy-Item "$repo\package.json" "$Output\resources\app\package.json" -Force
-CopyTree "$repo\src\service" "$runtime\desktop"
+MirrorTree "$repo\src\service" "$runtime\desktop"
 Copy-Item "$repo\src\cloud-local.cjs","$repo\src\cloud-guard.cjs","$repo\src\license-contract.cjs" "$runtime\desktop" -Force
-CopyTree "$backend\dist" "$runtime\backend\dist"
-CopyTree "$backend\sql" "$runtime\backend\sql"
-CopyTree "$frontend\.next-desktop\standalone" "$runtime\frontend"
-CopyTree "$frontend\.next-desktop\static" "$runtime\frontend\.next-desktop\static"
-CopyTree "$frontend\public" "$runtime\frontend\public"
+MirrorTree "$backend\dist" "$runtime\backend\dist"
+MirrorTree "$backend\sql" "$runtime\backend\sql"
+MirrorTree "$frontend\.next-desktop\standalone" "$runtime\frontend"
+MirrorTree "$frontend\.next-desktop\static" "$runtime\frontend\.next-desktop\static"
+MirrorTree "$frontend\public" "$runtime\frontend\public"
 $reportingUi=Get-ChildItem "$frontend\.next-desktop\static\chunks" -Filter '*.js' -File | Select-String -SimpleMatch -Pattern 'Business intelligence' -Quiet
 if(-not $reportingUi){throw 'Build the shared frontend with the reports and BI dashboard before staging Desktop'}
 $utf8=[Text.UTF8Encoding]::new($false)
