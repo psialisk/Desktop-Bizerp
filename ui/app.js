@@ -1,8 +1,8 @@
 const api=window.storeDesktop,$=id=>document.getElementById(id);
 
-const page=location.hash.slice(1)||'login';let operationLabel='Preparing local services…',current={},network=false,localErpAddress=false,kind='owner',pending=false,workflowTouched=false,recovery=null,welcome=null,recoveryLoading=false,maintenanceResult='',updatesInfo=null,updatesLoading=false,updatesError='',updateProgress=null;
+const page=['login','license','tools','recovery'].includes(location.hash.slice(1))?location.hash.slice(1):'login';let operationLabel='Preparing local services…',current={},network=false,localErpAddress=false,kind='owner',pending=false,workflowTouched=false,recovery=null,recoveryLoading=false,maintenanceResult='',updatesInfo=null,updatesLoading=false,updatesError='',updateProgress=null;
 
-for(const id of ['login','create','license','tools','recovery'])$(id+'Page').hidden=id!==page;
+for(const id of ['login','license','tools','recovery'])$(id+'Page').hidden=id!==page;
 
 if(page!=='login')document.body.classList.add('aux');
 
@@ -14,7 +14,16 @@ function iconText(node,icon,label){const image=document.createElement('i');image
 
 function canLocal(){return current.initialized&&current.ready&&current.configured&&!current.upgradeAvailable;}
 
-function render(s){current=s;
+function seedLabel(seed){const records=Number(seed?.records)||0;
+ if(seed?.state==='running')return 'Copying cloud data into this PC…';
+ if(seed?.state==='failed')return 'Cloud copy needs attention: '+(seed.message||'synchronization failed');
+ if(seed?.state==='waiting')return 'Cloud data copied; '+(Number(seed.pending)||0)+' record(s) wait for cloud history they depend on';
+ if(seed?.state==='seeded')return 'Cloud data is on this PC'+(records?': '+records+' record(s)':'')+(seed.at?' · '+new Date(seed.at).toLocaleString():'');
+ return '';}
+
+function renderSeed(seed){const node=$('seedFloater');if(!node)return;const text=seedLabel(seed);node.hidden=!text;if(!text)return;node.dataset.state=seed.state;$('seedText').textContent=text;}
+
+function render(s){current=s;renderSeed(s.localSeed);
 
  const waiting=!!s.busy||pending;const overlay=$('loadingOverlay');overlay.hidden=!waiting;for(const main of document.querySelectorAll('main')){main.inert=waiting;main.setAttribute('aria-busy',String(waiting));}
 
@@ -28,23 +37,22 @@ function render(s){current=s;
 
   $('forgotPassword').hidden=network||kind!=='owner'||!s.configured;
 
-  document.body.classList.toggle('network',network);iconText($('connectionBadge'),network?'globe2':'pc-display-horizontal',network?'NETWORK':s.mode==='training'?'LOCAL Â· TRAINING':'LOCAL Â· This computer');
+  document.body.classList.toggle('network',network);iconText($('connectionBadge'),network?'globe2':'pc-display-horizontal',network?'NETWORK':s.mode==='training'?'LOCAL · TRAINING':'LOCAL · This computer');
 
   $('localBusinessField').hidden=true;$('networkField').hidden=!network;$('networkUrl').disabled=busy;$('networkUrl').required=network;$('networkUrl').readOnly=!localErpAddress;$('networkUrl').placeholder=localErpAddress?'https://local-erp.example or http://192.168.1.20:3000':'https://bizerpsme.shop';$('localErpToggle').hidden=false;if(network&&!localErpAddress&&$('networkUrl').value!=='https://bizerpsme.shop')$('networkUrl').value='https://bizerpsme.shop';iconText($('localErpToggle'),localErpAddress?'cloud':'pc-display-horizontal',localErpAddress?'Use Business ERP cloud':'Connect Local ERP');$('workflowField').hidden=kind!=='pos';
 
   document.querySelector('[data-kind="customer"]').hidden=!network;
+  $('customerFoundationField').hidden=!network||kind!=='customer';
 
   for(const button of document.querySelectorAll('[data-kind]')){button.classList.toggle('selected',button.dataset.kind===kind);button.setAttribute('aria-pressed',String(button.dataset.kind===kind));}
 
   $('localBusiness').textContent=s.businessName||(s.configured?'Local business':'No local business created yet');
 
-  $('signIn').textContent=pending?'Signing inâ€¦':network?'Sign in to network':'Sign in locally';$('signIn').disabled=busy||!network&&!canLocal();
+  $('signIn').textContent=pending?'Signing in…':network?'Sign in to network':'Sign in locally';$('signIn').disabled=busy||!network&&!canLocal();
 
   iconText($('connectionToggle'),network?'pc-display-horizontal':'wifi',network?'Use local mode':'Connect to Network');$('connectionToggle').setAttribute('aria-expanded',String(network));
 
   $('modeNote').textContent=network?'Network login opens the selected server workspace':'Works without internet';
-
-  $('createBusiness').hidden=network;$('linkDivider').hidden=network;$('createBusiness').disabled=busy||!s.initialized||s.configured||s.upgradeAvailable;
 
   $('runtimeStatus').textContent=network?(s.startupError?'Local startup is unavailable. Network sign-in is available.':''):(s.startupError?'Local startup: '+s.startupError:s.message||'');
 
@@ -60,14 +68,6 @@ function render(s){current=s;
 
  }
 
- if(page==='create'){
-
-  if(s.packages?.length&&$('packageChoice').options.length!==s.packages.length){$('packageChoice').replaceChildren(...s.packages.map(p=>new Option(p.name+' Â· '+p.industry,p.id)));$('packageChoice').value='water-refilling';}
-
-  if(s.configured)for(const button of $('createForm').querySelectorAll('button[type="submit"]'))button.disabled=true;
-
- }
-
  if(page==='license'){
 
   $('licenseBusiness').textContent=s.businessName||(s.configured?'Local business':'No local business yet');$('licenseStatus').textContent=s.license?.message||(!s.configured?'Create a local business first':'Local license available');
@@ -79,8 +79,6 @@ function render(s){current=s;
   for(const id of ['licenseRequest','licenseExport','licensePreview','licenseApply'])$(id).disabled=busy||!s.initialized;
 
  }
-
- if(page==='create')$('welcomeContinue').disabled=busy||!$('savedCredentials').checked;
 
  if(page==='recovery'){
 
@@ -147,37 +145,25 @@ for(const button of document.querySelectorAll('.reveal'))button.onclick=()=>{con
 
 window.addEventListener('blur',()=>{for(const input of document.querySelectorAll('.password-field input')){input.type='password';input.nextElementSibling.textContent='Show';}});
 
-$('loginForm').onsubmit=event=>{event.preventDefault();const value={mode:network?'network':'local',kind,email:$('email').value,password:$('password').value,server:$('networkUrl').value,workflowId:$('workflow').value};$('password').value='';$('password').type='password';$('showPassword').textContent='Show';perform(()=>api.login(value),network?'Connecting and signing in…':'Opening your local workspace…');};
+$('loginForm').onsubmit=event=>{event.preventDefault();const value={mode:network?'network':'local',kind,email:$('email').value,password:$('password').value,server:$('networkUrl').value,workflowId:$('workflow').value,customerFoundation:$('customerFoundation').value};$('password').value='';$('password').type='password';$('showPassword').textContent='Show';perform(()=>api.login(value),network?'Connecting and signing in…':'Opening your local workspace…');};
 
-$('createBusiness').onclick=()=>perform(()=>api.openWindow('create'));$('openLicense').onclick=()=>perform(()=>api.openWindow('license'));
+$('openLicense').onclick=()=>perform(()=>api.openWindow('license'));
 
 for(const button of document.querySelectorAll('.close'))button.onclick=()=>window.close();
 
-$('createForm').onsubmit=event=>{event.preventDefault();const form=new FormData(event.target),value=Object.fromEntries(form);value.training=form.has('training');for(const input of event.target.querySelectorAll('[name="password"],[name="cashierPassword"],[name="confirmation"],[name="enrollmentKey"]'))input.value='';perform(async()=>{const result=await api.setup(value);value.password='';value.cashierPassword='';if(result?.welcome){welcome=result.welcome;$('welcomeBusiness').textContent=welcome.businessName;$('welcomeOwner').textContent=welcome.ownerEmail;$('welcomeOwnerPassword').value=welcome.ownerPassword;$('welcomeCashierCard').hidden=!welcome.cashierEmail;$('welcomeCashier').textContent=welcome.cashierEmail;$('welcomeCashierPassword').value=welcome.cashierPassword;$('welcomeCode').value=welcome.recoveryCode||'';document.querySelector('.recovery-note').hidden=welcome.cloudBound;document.querySelector('#welcomeDialog .connection-badge').textContent=welcome.cloudBound?'Cloud activated Desktop':'7-day trial + 3-day grace';$('welcomeDeadline').textContent='Available until '+new Date(welcome.expiresAt).toLocaleString();$('welcomeDialog').showModal();$('createNotice').textContent='Local business created.';event.target.reset();}},'Creating the business, accounts and local storage…');};
-
 $('forgotPassword').onclick=()=>perform(()=>api.openWindow('recovery'));
 
-$('savedCredentials').onchange=()=>render(current);
+async function updateRecovery(){const result=await api.recoveryStatus();recovery={...result,checkedAt:Date.now()};$('recoveryState').textContent=result.message;const repair=result.mode==='repair';$('recoveryCodeField').hidden=repair;$('recoveryCode').required=!repair;if(repair)$('recoveryCode').value='';render(current);tickRecovery();}
 
-$('welcomeDialog').addEventListener('cancel',event=>event.preventDefault());
+function tickRecovery(){if(!recovery)return;const remaining=Math.max(0,recovery.remainingMs-(Date.now()-recovery.checkedAt));if(remaining<=0&&recovery.mode!=='repair')recovery.available=false;const minutes=Math.ceil(remaining/60000);$('recoveryCountdown').textContent=recovery.mode==='repair'?'Local repair available':recovery.available?Math.floor(minutes/60)+'h '+minutes%60+'m remaining':'Quick recovery unavailable';$('resetOwner').disabled=pending||!!current.busy||!recovery.available;}
 
-$('saveCredentials').onclick=()=>perform(async()=>{if(await api.saveCredentials())$('welcomeFeedback').textContent='Protected credentials saved. Keep a separate safe record if you will use another Windows account.';});
+$('recoveryForm').onsubmit=event=>{event.preventDefault();const value={email:$('recoveryEmail').value,code:$('recoveryCode').value,password:$('recoveryPassword').value,confirmation:$('recoveryConfirmation').value};$('recoveryPassword').value='';$('recoveryConfirmation').value='';perform(async()=>{try{const result=await api.resetOwner(value);$('recoveryState').textContent=result.message;$('recoveryCode').value='';}finally{value.password='';value.confirmation='';const previous=$('recoveryState').textContent;await updateRecovery();if(/^(Owner password reset|Local owner credential repaired)/.test(previous))$('recoveryState').textContent=previous;}});};
 
-$('copyRecovery').onclick=()=>perform(async()=>{await api.copy(welcome.recoveryCode);$('welcomeFeedback').textContent='Recovery code copied. Store it safely.';});
-
-$('welcomeContinue').onclick=()=>perform(async()=>{if(!$('savedCredentials').checked)return;await api.clearWelcome();welcome=null;for(const id of ['welcomeOwnerPassword','welcomeCashierPassword','welcomeCode'])$(id).value='';window.close();});
-
-async function updateRecovery(){const result=await api.recoveryStatus();recovery={...result,checkedAt:Date.now()};$('recoveryState').textContent=result.message;render(current);tickRecovery();}
-
-function tickRecovery(){if(!recovery)return;const remaining=Math.max(0,recovery.remainingMs-(Date.now()-recovery.checkedAt));if(remaining<=0)recovery.available=false;const minutes=Math.ceil(remaining/60000);$('recoveryCountdown').textContent=recovery.available?Math.floor(minutes/60)+'h '+minutes%60+'m remaining':'Quick recovery unavailable';$('resetOwner').disabled=pending||!!current.busy||!recovery.available;}
-
-$('recoveryForm').onsubmit=event=>{event.preventDefault();const value={email:$('recoveryEmail').value,code:$('recoveryCode').value,password:$('recoveryPassword').value,confirmation:$('recoveryConfirmation').value};$('recoveryPassword').value='';$('recoveryConfirmation').value='';perform(async()=>{try{const result=await api.resetOwner(value);$('recoveryState').textContent=result.message;$('recoveryCode').value='';}finally{value.password='';value.confirmation='';const previous=$('recoveryState').textContent;await updateRecovery();if(previous.startsWith('Owner password reset'))$('recoveryState').textContent=previous;}});};
-
-$('openCredentials').onclick=()=>perform(async()=>{const saved=await api.openCredentials();if(!saved)return;$('recoveryEmail').value=saved.ownerEmail;$('recoveryCode').value=saved.recoveryCode;$('savedAccountEmails').textContent='Owner: '+saved.ownerEmail+(saved.cashierEmail?' Â· Cashier: '+saved.cashierEmail:'');$('savedOwnerPassword').value=saved.ownerPassword;$('savedCashierPassword').value=saved.cashierPassword||'';$('savedCashierField').hidden=!saved.cashierEmail;$('savedAccounts').hidden=false;});
+$('openCredentials').onclick=()=>perform(async()=>{const saved=await api.openCredentials();if(!saved)return;$('recoveryEmail').value=saved.ownerEmail;$('recoveryCode').value=saved.recoveryCode;$('savedAccountEmails').textContent='Owner: '+saved.ownerEmail+(saved.cashierEmail?' · Cashier: '+saved.cashierEmail:'');$('savedOwnerPassword').value=saved.ownerPassword;$('savedCashierPassword').value=saved.cashierPassword||'';$('savedCashierField').hidden=!saved.cashierEmail;$('savedAccounts').hidden=false;});
 
 if(page==='recovery')setInterval(tickRecovery,1000);
 
-window.addEventListener('beforeunload',()=>{welcome=null;for(const input of document.querySelectorAll('input[type="password"],#welcomeCode,#recoveryCode,#welcomeOwnerPassword,#welcomeCashierPassword,#savedOwnerPassword,#savedCashierPassword'))input.value='';});
+window.addEventListener('beforeunload',()=>{for(const input of document.querySelectorAll('input[type="password"],#recoveryCode,#savedOwnerPassword,#savedCashierPassword'))input.value='';});
 
 $('licenseExport').onclick=()=>perform(async()=>{if(await api.licenseExport())$('licenseNotice').textContent='Installation request exported. Send the .gnjrequest file to your license administrator.';});
 
@@ -210,12 +196,9 @@ $('updateInstall').onclick=()=>perform(async()=>{await api.updatesInstall();},'I
 
 perform(()=>api.status(),'Preparing local services…');
 
-
-
-
-
-
 $('cloudSignup').onclick=()=>perform(()=>api.cloudSignup(),'Opening cloud registration...');
 
 $('syncNow').onclick=()=>perform(async()=>{$('cloudStatus').textContent=await api.syncNow();});
 $('syncHistory').onclick=()=>perform(async()=>{$('syncHistoryRows').textContent=JSON.stringify(await api.syncHistory(),null,2);$('syncHistoryRows').hidden=false;});
+
+$('customerDiscovery').onclick=()=>perform(()=>api.customerDiscovery(),'Opening Pickleball discovery...');

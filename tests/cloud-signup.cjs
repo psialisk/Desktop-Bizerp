@@ -1,6 +1,8 @@
 const assert=require('node:assert/strict');
 const {signupWindowOptions,signupTarget}=require('../src/cloud-signup.cjs');
 assert.equal(signupTarget(),'https://www.bizerpsme.shop/signup');
+assert.equal(signupTarget('health'),'https://www.bizerpsme.shop/discover/health');
+assert.throws(()=>signupTarget('foreign'),/Unknown/);
 const options=signupWindowOptions();
 assert.equal(options.webPreferences.nodeIntegration,false);
 assert.equal(options.webPreferences.contextIsolation,true);

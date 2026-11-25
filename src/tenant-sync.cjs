@@ -1,6 +1,6 @@
 const fs=require('node:fs/promises'),path=require('node:path'),crypto=require('node:crypto');
 const protocol=require('./cloud-local.cjs');
-const profileKeys=['databases','uploads','localBusiness','cloudBinding','offlineLicense','cloudRegistration','pendingCloudIdentity','schemaHash','licenseControl'];
+const profileKeys=['databases','uploads','localBusiness','cloudBinding','offlineLicense','cloudRegistration','pendingCloudIdentity','schemaHash','licenseControl','localSeed'];
 const pick=v=>Object.fromEntries(profileKeys.map(k=>[k,v[k]]));
 const normalized=s=>String(s||'').trim().toLowerCase().replace(/^0(?=9\d{9}$)/,'+63');
 function skewText(ms){const minutes=Math.round(Math.abs(ms)/60000),hours=Math.floor(minutes/60);return (hours?hours+' h '+(minutes%60)+' min':minutes+' min')+(ms<0?' behind':' ahead of');}
@@ -24,10 +24,22 @@ async function migrate(rt){
  rt.v.schemaHash=rt.manifest.schemaHash;rt.upgradePending=false;rt.upgradeEntry=null;await rt.secrets.save(rt.v);rt.message('Local schema updated. Business records and role permission history were preserved.');
 }
 async function saveProfile(rt){const id=rt.v.cloudBinding?.tenantId||(rt.v.databases?.live?'local-'+rt.v.instanceId:null);if(!id)return;rt.v.cloudProfiles={...rt.v.cloudProfiles,[id]:{...pick(rt.v),identifiers:[...new Set([...(rt.v.cloudProfiles?.[id]?.identifiers||[]),rt.v.localBusiness?.ownerEmail].filter(Boolean))]}};await rt.secrets.save(rt.v);}
-async function selectProfile(rt,id){if(rt.v.cloudBinding?.tenantId===id){await migrate(rt);return;}await saveProfile(rt);await rt.stopHttp();const saved=rt.v.cloudProfiles?.[id];for(const k of profileKeys)delete rt.v[k];Object.assign(rt.v,saved||{databases:{},uploads:{},schemaHash:rt.manifest.schemaHash});await rt.secrets.save(rt.v);await migrate(rt);}
+async function selectProfile(rt,id){if(rt.v.cloudBinding?.tenantId===id){await migrate(rt);return;}await saveProfile(rt);await rt.stopHttp();const saved=rt.v.cloudProfiles?.[id];for(const k of profileKeys)delete rt.v[k];Object.assign(rt.v,saved||{databases:{},uploads:{},schemaHash:rt.manifest.schemaHash});rt.localSeed=saved?.localSeed?{state:'seeded',records:saved.localSeed.records,downloaded:0,applied:0,pending:0,at:saved.localSeed.at,message:''}:null;await rt.secrets.save(rt.v);await migrate(rt);}
 async function selectOffline(rt,identifier){if(!rt.v.cloudProfiles)return;const current=rt.v.cloudProfiles[rt.v.cloudBinding?.tenantId];if([rt.v.localBusiness?.ownerEmail,...(current?.identifiers||[])].some(s=>s&&normalized(s)===normalized(identifier)))return;const entry=Object.entries(rt.v.cloudProfiles).find(([,p])=>(p.identifiers||[]).some(s=>normalized(s)===normalized(identifier)));if(entry&&entry[0]!==rt.v.cloudBinding?.tenantId){await selectProfile(rt,entry[0]);await rt.start('live');}}
 async function exchange(rt,events=[],cursor='0',historyKey=null){const b=rt.v.cloudBinding,payload={events,cursor,historyKey};return protocol.request(b.api,'/desktop-local/records',{body:{...protocol.proof(b.identity,'recheck',{activationId:b.activationId,payloadHash:crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex'),...(b.syncActorGrant?{actorGrant:b.syncActorGrant}:{})}),...payload}});}
-async function applyPending(rt,c,pending){const {applyDesktopEvents}=require(path.join(rt.bundle,'backend/dist/common/desktop-record-sync'));const db={query:async(s,p)=>(await c.query(s,p)).rows};let todo=[...pending].sort((a,b)=>Date.parse(b.event_at)-Date.parse(a.event_at)||String(b.device_id).localeCompare(String(a.device_id))||String(b.event_id).localeCompare(String(a.event_id)));await c.query('BEGIN');try{while(todo.length){const next=[];let progress=0;for(const e of todo){await c.query('SAVEPOINT sync_row');try{await applyDesktopEvents(db,rt.v.cloudBinding.tenantId,[e],true);await c.query('RELEASE SAVEPOINT sync_row');progress++;}catch(err){await c.query('ROLLBACK TO SAVEPOINT sync_row');if(['23503','P0001'].includes(err.code)){e.syncDependencyError=err.message;next.push(e);}else throw err;}}if(!progress)throw Error('Sync could not apply '+todo[0].table_name+': '+(todo[0].syncDependencyError||'referenced records are unavailable')+'. Pending changes are retained');todo=next;}await c.query('COMMIT');}catch(e){await c.query('ROLLBACK');throw e;}}
+// Every record that can be applied is committed; only the rows still missing a parent stay queued, so one
+// orphan cannot keep the rest of the cloud history out of the local copy.
+async function applyPending(rt,c,pending){const {applyDesktopEvents}=require(path.join(rt.bundle,'backend/dist/common/desktop-record-sync'));const db={query:async(s,p)=>(await c.query(s,p)).rows};let todo=[...pending].sort((a,b)=>Date.parse(b.event_at)-Date.parse(a.event_at)||String(b.device_id).localeCompare(String(a.device_id))||String(b.event_id).localeCompare(String(a.event_id)));
+ while(todo.length){const deferred=[];
+  await c.query('BEGIN');
+  try{for(const e of todo){await c.query('SAVEPOINT sync_row');try{await applyDesktopEvents(db,rt.v.cloudBinding.tenantId,[e],true);await c.query('RELEASE SAVEPOINT sync_row');}catch(err){await c.query('ROLLBACK TO SAVEPOINT sync_row');if(['23503','P0001'].includes(err.code)){e.syncDependencyError=err.message;deferred.push(e);}else throw err;}}
+   await c.query('COMMIT');
+  }catch(e){await c.query('ROLLBACK');throw e;}
+  if(!deferred.length)return [];
+  // Nothing moved in this pass: the parent is not in the journal at all, so only these rows keep waiting.
+  if(deferred.length===todo.length)return deferred;
+  todo=deferred;}
+ return [];}
 // The sync position is kept in the local database next to the journal, so losing the small state file
 // on disk cannot make the Desktop upload work the cloud already has.
 const checkpointTable="CREATE TABLE IF NOT EXISTS desktop_sync_checkpoint(tenant_id uuid NOT NULL,actor_key text NOT NULL,device_id uuid NOT NULL,cursor text NOT NULL,uploaded bigint NOT NULL DEFAULT 0,updated_at timestamptz NOT NULL DEFAULT now(),PRIMARY KEY(tenant_id,actor_key))";
@@ -42,7 +54,10 @@ async function journalMax(c){try{return Number((await c.query('SELECT COALESCE(m
 function resumeState(file,saved,max){const within=s=>!s||max==null||Number(s.uploaded)<=max;
  const base=within(file)?file:null,pick=saved&&within(saved)&&(!base||Number(saved.uploaded)>Number(base.uploaded))?saved:base;
  return {cursor:pick?.cursor||'0',uploaded:pick?.uploaded||'0',pending:Array.isArray(pick?.pending)?pick.pending:[]};}
-function reportSyncError(rt,e){if(/more than 5 minutes in the future/.test(String(e.message)))rt.clockSkew={skewMs:null,at:new Date().toISOString(),message:'This computer clock is more than 5 minutes ahead of the cloud, so new records are refused. Correct the system clock, then use Sync now.'};rt.syncSummary='Sync pending: '+e.message;rt.message(rt.syncSummary);}
+function seedText(seed){const records=Number(seed?.records)||0;if(seed?.state==='seeded')return 'Cloud data is on this PC'+(records?': '+records+' record(s) copied':'')+'.';if(seed?.state==='waiting')return 'Cloud data copied; '+(seed.pending||0)+' record(s) wait for cloud history they depend on.';return seed?.message||'';}
+// The marker survives a restart, so the floater still says this PC holds a cloud copy before the next sync.
+async function rememberSeed(rt,seed){const saved=rt.v.localSeed;if(saved&&saved.records===seed.records)return;rt.v.localSeed={at:seed.at,records:seed.records};try{await rt.secrets.save(rt.v);}catch{}}
+function reportSyncError(rt,e){rt.localSeed={...(rt.localSeed||{records:0,pending:0}),state:'failed',at:new Date().toISOString(),message:String(e.message||e)};if(/more than 5 minutes in the future/.test(String(e.message)))rt.clockSkew={skewMs:null,at:new Date().toISOString(),message:'This computer clock is more than 5 minutes ahead of the cloud, so new records are refused. Correct the system clock, then use Sync now.'};rt.syncSummary='Sync pending: '+e.message;rt.message(rt.syncSummary);}
 // Local record changes and local sign-ins ask for a sync immediately; a burst coalesces into one run.
 function requestSync(rt){if(!rt.v?.cloudBinding||!rt.v?.databases?.live)return;if(rt.tenantSyncRunning){rt.tenantSyncAgain=true;return;}if(rt.tenantSyncSoon)return;rt.tenantSyncSoon=setTimeout(()=>{rt.tenantSyncSoon=null;synchronize(rt).catch(e=>reportSyncError(rt,e));},150);rt.tenantSyncSoon.unref?.();}
 const pendingFilter="e.tenant_id=$1 AND e.device_id=$2 AND e.sequence>$3::bigint AND NOT t.cloud_only AND e.table_name NOT IN ('erp_inventory_values','retail_lot_allocations','retail_prescription_dispenses','notifications') AND ($4::uuid IS NULL OR (e.origin_actor_id=$4 AND e.table_name NOT IN ('retail_customer_policy','retail_pos_policy','erp_inventory_settings')))";
@@ -59,15 +74,19 @@ async function probeLocal(rt){if(rt.tenantSyncRunning||rt.tenantSyncProbing)retu
   if((await c.query(pendingSQL('1',' LIMIT 1'),pendingArgs(b,uploaded))).rows[0])requestSync(rt);
  }catch{await rt.tenantSyncProbe?.end().catch(()=>{});rt.tenantSyncProbe=null;}
  finally{rt.tenantSyncProbing=false;}}
-async function synchronize(rt){if(rt.tenantSyncRunning)return;const b=rt.v.cloudBinding;if(!b||!rt.v.databases?.live)return;rt.tenantSyncRunning=true;const c=await rt.client(rt.v.databases.live);const file=stateFile(rt,b);try{
+async function synchronize(rt,{seed=false}={}){if(rt.tenantSyncRunning)return;const b=rt.v.cloudBinding;if(!b||!rt.v.databases?.live)return;rt.tenantSyncRunning=true;const c=await rt.client(rt.v.databases.live);const file=stateFile(rt,b);try{
  await require('./automatic-license.cjs').refresh(rt);
+ // The desktop shows this run's progress, so a cloud login can say what the local copy already holds.
+ const received={downloaded:0,applied:0},prior=rt.localSeed;
+ rt.seeding=seed;rt.localSeed={state:'running',records:prior?.records||0,downloaded:0,applied:0,pending:0,at:prior?.at||null,message:'Copying cloud data into this PC…'};
+ if(seed)rt.message('Copying your cloud business into this PC…');
  let clockSkew=null,repaired=null,serverTime=NaN;const state=resumeState(await readStateFile(file),await readCheckpoint(c,b),await journalMax(c));
  // The checkpoint is the crash-proof copy, so it must never describe a page that only the state file
  // remembers: while a page waits to be applied the durable cursor stays where the applied work ended.
  const save=async()=>{const temp=file+'.tmp';await fs.writeFile(temp,JSON.stringify(state));await fs.rename(temp,file);if(!state.pending.length)await saveCheckpoint(rt,c,b,state);};
  // Download the complete dependency set before applying; the cursor and pending payload are persisted together.
- let complete=false;while(!complete){const page=await exchange(rt,[],state.cursor);serverTime=Date.parse(page.serverTime);state.pending.push(...page.events);state.cursor=page.cursor;await save();complete=page.complete;}
- if(state.pending.length){await applyPending(rt,c,state.pending);state.pending=[];await save();}
+ let complete=false;while(!complete){const page=await exchange(rt,[],state.cursor);serverTime=Date.parse(page.serverTime);state.pending.push(...page.events);received.downloaded+=page.events.length;state.cursor=page.cursor;await save();complete=page.complete;}
+ if(state.pending.length){const queued=state.pending.length;state.pending=await applyPending(rt,c,state.pending);received.applied+=queued-state.pending.length;await save();}
  // A clock that ran ahead leaves queued rows future-dated and refused; shift them onto the cloud timeline first.
  if(Number.isFinite(serverTime)){const retimed=await require(path.join(rt.bundle,'backend/dist/common/desktop-record-sync')).retimeFutureEvents({query:async(s,p)=>(await c.query(s,p)).rows},b.tenantId,b.identity.installationId,state.uploaded,new Date(serverTime));if(retimed.count)repaired={skewMs:retimed.skewMs,at:new Date().toISOString(),retimed:retimed.count,message:'This computer clock was '+skewText(retimed.skewMs)+' the cloud time, so '+retimed.count+' queued record(s) were re-timestamped to the cloud time and synchronization resumed. Correct the system clock so new records keep their real time.'};}
  // Only locally recorded business events are uploaded; replayed cloud references and license/credential state never upload.
@@ -76,11 +95,14 @@ async function synchronize(rt){if(rt.tenantSyncRunning)return;const b=rt.v.cloud
   const first=(await c.query(pendingSQL('e.*',' ORDER BY e.sequence LIMIT 1'),args)).rows[0];if(!first)break;
   const group=first.transaction_id;const rows=(await c.query(pendingSQL('e.*',' AND '+(group?'e.transaction_id=$5':'e.sequence=$5::bigint')+' ORDER BY e.sequence'),[...args,group||first.sequence])).rows;
   if(rows.length>1000||Buffer.byteLength(JSON.stringify(rows))>1500000)throw Error('A transaction exceeds the sync batch limit; its records remain saved');
-  const result=await exchange(rt,rows,state.cursor);clockSkew=pickClockSkew(clockSkew,result.outcomes);state.uploaded=String(rows.at(-1).sequence);state.pending.push(...result.events);state.cursor=result.cursor;await save();if(state.pending.length){await applyPending(rt,c,state.pending);state.pending=[];await save();}
+  const result=await exchange(rt,rows,state.cursor);clockSkew=pickClockSkew(clockSkew,result.outcomes);state.uploaded=String(rows.at(-1).sequence);state.pending.push(...result.events);state.cursor=result.cursor;await save();if(state.pending.length){const queued=state.pending.length;state.pending=await applyPending(rt,c,state.pending);received.applied+=queued-state.pending.length;await save();}
  }
- rt.clockSkew=clockSkewState(clockSkew)||repaired;rt.syncSummary='Cloud and local records synchronized. History is retained for every received version.';
- }finally{await c.end();rt.tenantSyncRunning=false;if(rt.tenantSyncAgain){rt.tenantSyncAgain=false;requestSync(rt);}}}
+ rt.clockSkew=clockSkewState(clockSkew)||repaired;rt.syncSummary=state.pending.length?'Cloud and local records synchronized; '+state.pending.length+' cloud record(s) wait for records the cloud never journaled.':'Cloud and local records synchronized. History is retained for every received version.';
+ const next={state:state.pending.length?'waiting':'seeded',records:(prior?.records||0)+received.applied,downloaded:received.downloaded,applied:received.applied,pending:state.pending.length,at:new Date().toISOString(),message:''};
+ rt.localSeed=next;await rememberSeed(rt,next);if(seed)rt.message(seedText(next));
+ }finally{await c.end();rt.tenantSyncRunning=false;rt.seeding=false;if(rt.tenantSyncAgain){rt.tenantSyncAgain=false;requestSync(rt);}}}
 function start(rt){stop(rt);if(!rt.v.cloudBinding)return;
+ if(rt.v.localSeed&&!rt.localSeed)rt.localSeed={state:'seeded',records:rt.v.localSeed.records,downloaded:0,applied:0,pending:0,at:rt.v.localSeed.at,message:''};
  // A journal probe every two seconds starts synchronization seconds after a local write; the thirty second
  // timer still pulls cloud changes (and covers writes that never pass through the local backend).
  rt.tenantSyncProbeTimer=setInterval(()=>probeLocal(rt),2000);rt.tenantSyncProbeTimer.unref?.();
@@ -91,13 +113,19 @@ async function cloudLogin(rt,input,auth,api){const tenant=auth.actor.tenantId;if
   const activation=await protocol.staffActivation(rt,input,auth,api);const {claims,cloudBinding,staff,staffGrant}=activation;
   if(!rt.v.databases?.live){const name='store_live_'+crypto.randomBytes(6).toString('hex');await rt.createDatabase(name);const c=await rt.client(name);try{await installSchema(c,await fs.readFile(path.join(rt.bundle,'schema.sql'),'utf8'));await c.query('INSERT INTO desktop_sync_identity(singleton,device_id) VALUES(true,$1)',[cloudBinding.identity.installationId]);}finally{await c.end();}rt.v={...rt.v,databases:{live:name},uploads:{live:path.join(rt.root,'uploads',tenant)},schemaHash:rt.manifest.schemaHash};await fs.mkdir(rt.v.uploads.live,{recursive:true});}
   rt.v={...rt.v,cloudBinding,localBusiness:{businessName:claims.businessName,ownerName:claims.fullName,ownerEmail:claims.email,packageId:claims.foundation.specializationId}};await rt.secrets.save(rt.v);
-  const manager=require('./cloud-staff.cjs');await manager.initializeStaffTenant(rt,claims);await synchronize(rt);await manager.mirror(rt,staff,staffGrant,input.password,input.email);
+  const manager=require('./cloud-staff.cjs');await manager.initializeStaffTenant(rt,claims);await synchronize(rt,{seed:true});await manager.mirror(rt,staff,staffGrant,input.password,input.email);
   rt.v.cloudProfiles={...rt.v.cloudProfiles,[tenant]:{...pick(rt.v),identifiers:[...new Set([...(rt.v.cloudProfiles?.[tenant]?.identifiers||[]),input.email,staff.email,claims.email])]}};await saveProfile(rt);await rt.start('live');start(rt);return true;
  }
 
  if(!rt.v.cloudBinding){const activation=await protocol.activate(rt,{email:input.email,password:input.password,confirmation:input.password});const {claims,cloudBinding}=activation;const name='store_live_'+crypto.randomBytes(6).toString('hex');await rt.createDatabase(name);const c=await rt.client(name);try{await installSchema(c,await fs.readFile(path.join(rt.bundle,'schema.sql'),'utf8'));await c.query('INSERT INTO desktop_sync_identity(singleton,device_id) VALUES(true,$1)',[cloudBinding.identity.installationId]);}finally{await c.end();}rt.v={...rt.v,cloudBinding,databases:{live:name},uploads:{live:path.join(rt.root,'uploads',tenant)},localBusiness:{businessName:claims.businessName,ownerName:claims.fullName,ownerEmail:claims.email,packageId:claims.foundation.specializationId},schemaHash:rt.manifest.schemaHash};await fs.mkdir(rt.v.uploads.live,{recursive:true});await rt.secrets.save(rt.v);await protocol.request(api,'/desktop-local/login-enroll',{token:auth.token,body:protocol.proof(cloudBinding.identity,'recheck',{activationId:cloudBinding.activationId})});
  }else{const b=rt.v.cloudBinding;const renewed=await protocol.request(api,'/desktop-local/login-enroll',{token:auth.token,body:protocol.proof(b.identity,'recheck',{activationId:b.activationId})});protocol.verifyGrant(renewed.grant,b.keys,b,'owner');rt.v.cloudBinding={...b,ownerGrant:renewed.grant};delete rt.v.cloudBinding.syncActorGrant;delete rt.v.cloudBinding.syncActorId;await rt.secrets.save(rt.v);const c=await rt.client(rt.v.databases.live);try{await c.query('INSERT INTO desktop_sync_identity(singleton,device_id) VALUES(true,$1) ON CONFLICT(singleton) DO UPDATE SET device_id=EXCLUDED.device_id',[b.identity.installationId]);}finally{await c.end();}}
  const file=stateFile(rt,{tenantId:tenant});let firstSync=false;try{await fs.access(file);}catch(e){if(e.code!=='ENOENT')throw e;firstSync=!(await storedCheckpoint(rt));}if(firstSync){const c=await rt.client(rt.v.databases.live);try{await c.query("UPDATE desktop_sync_events e SET device_id=$2 FROM desktop_sync_tables t WHERE e.table_name=t.table_name AND e.tenant_id=$1 AND e.device_id='cloud' AND NOT t.cloud_only",[tenant,rt.v.cloudBinding.identity.installationId]);}finally{await c.end();}}
- await synchronize(rt);{const c=await rt.client(rt.v.databases.live);try{await require('./cloud-staff.cjs').installPolicy(rt,c,protocol.verifyGrant(rt.v.cloudBinding.ownerGrant,rt.v.cloudBinding.keys,rt.v.cloudBinding,'owner'));}finally{await c.end();}}await require('./cloud-staff.cjs').cacheOwnerLogin(rt,input,auth);rt.v.cloudProfiles={...rt.v.cloudProfiles,[tenant]:{...pick(rt.v),identifiers:[...new Set([input.email,auth.actor.email,auth.actor.loginPhone,rt.v.localBusiness.ownerEmail].filter(Boolean))]}};await saveProfile(rt);await rt.start('live');start(rt);return true;
+ // A cloud login must leave a working local login behind even when a page of cloud history cannot be
+ // applied yet: the business row, its signed policy and the owner account are prepared first, and the
+ // replay that follows is a retried copy, not a precondition for signing in on this PC.
+ const owner=protocol.verifyGrant(rt.v.cloudBinding.ownerGrant,rt.v.cloudBinding.keys,rt.v.cloudBinding,'owner');
+ try{const c=await rt.client(rt.v.databases.live);try{await c.query("INSERT INTO tenants(id,name,slug,status) VALUES($1,$2,$3,'active') ON CONFLICT(id) DO NOTHING",[tenant,owner.businessName||rt.v.localBusiness?.businessName||'Business','cloud-'+tenant]);await require('./cloud-staff.cjs').installPolicy(rt,c,owner);}finally{await c.end();}await require('./cloud-staff.cjs').cacheOwnerLogin(rt,input,auth);}catch(e){rt.message('Local sign-in is not ready yet: '+e.message);}
+ try{await synchronize(rt,{seed:true});}catch(e){rt.message('Cloud history is still being applied on this PC: '+e.message);}
+ rt.v.cloudProfiles={...rt.v.cloudProfiles,[tenant]:{...pick(rt.v),identifiers:[...new Set([input.email,auth.actor.email,auth.actor.loginPhone,rt.v.localBusiness?.ownerEmail].filter(Boolean))]}};await saveProfile(rt);await rt.start('live');start(rt);return true;
 }
 module.exports={applyPending,migrate,installSchema,cloudLogin,synchronize,requestSync,start,stop,selectOffline,saveProfile,exchange};
