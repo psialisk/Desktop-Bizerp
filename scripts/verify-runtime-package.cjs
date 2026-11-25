@@ -16,7 +16,8 @@ const DELTA_OBJECTS = {
   '128_fitness_courts_open_play.sql': ['fitness_courts', 'fitness_court_bookings', 'fitness_open_plays', 'fitness_open_play_attendees'],
   '129_fitness_reservation_billing.sql': ['fitness_payment_methods', 'fitness_payment_proofs'],
   '130_fitness_venue_profile.sql': ['fitness_venue_profiles', 'fitness_venue_posts'],
-  '133_reports_analytics.sql': ['report_saved_views', 'report_export_jobs', 'report_execution_logs']
+  '133_reports_analytics.sql': ['report_saved_views', 'report_export_jobs', 'report_execution_logs'],
+  '139_fitness_shared_venues_check_in.sql': ['fitness_venues']
 };
 
 const sha256 = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
@@ -79,7 +80,8 @@ if (!fs.existsSync(schemaPath)) {
       if (!pattern.test(schema)) missing.push(table + ' (' + migration + ')');
     }
   }
-  if (missing.length) fail('runtime schema is missing the 120-133 delta: ' + missing.join(', '));
+  for(const [pattern,label] of [[/CREATE OR REPLACE VIEW\s+fitness_court_public_profiles/i,'fitness_court_public_profiles'],[/ALTER TABLE\s+fitness_court_bookings\s+ADD COLUMN IF NOT EXISTS\s+checked_in_count/i,'booking checked_in_count'],[/ALTER TABLE\s+fitness_open_play_attendees\s+ADD COLUMN IF NOT EXISTS\s+checked_in_count/i,'open-play checked_in_count']])if(!pattern.test(schema))missing.push(label+' (139)');
+  if (missing.length) fail('runtime schema is missing the 120-139 delta: ' + missing.join(', '));
 }
 
 const routes = Array.isArray(manifest.upgrades) ? manifest.upgrades : [];
@@ -121,4 +123,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log('PASS ' + manifest.version + ': schema ' + String(manifest.schemaHash).slice(0, 12) + ' matches the shipped schema.sql with the full 120-133 delta, ' + routes.length + ' upgrade routes re-hash to their shipped files' + (previousArg ? ', previous package route present' : ''));
+console.log('PASS ' + manifest.version + ': schema ' + String(manifest.schemaHash).slice(0, 12) + ' matches the shipped schema.sql with the full 120-139 delta, ' + routes.length + ' upgrade routes re-hash to their shipped files' + (previousArg ? ', previous package route present' : ''));

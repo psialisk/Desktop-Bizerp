@@ -5,14 +5,16 @@ const {provision}=require('../src/provision.cjs'),{installPolicy,prepareLogin}=r
 const {packageFoundation}=require(path.join(backend,'dist/common/package-foundation'));
 const {verifyGrant}=require('../src/cloud-local.cjs');
 (async()=>{const db=new PGlite();const originalFetch=global.fetch;try{
-await db.exec(fs.readFileSync('scripts/schema_calendar.sql','utf8'));
+await db.exec(fs.readFileSync(process.env.ERP_RUNTIME_SCHEMA||'scripts/schema_calendar.sql','utf8'));
+await db.exec(fs.readFileSync(path.join(backend,'sql/111_email_verification.sql'),'utf8'));
+await db.exec(fs.readFileSync(path.join(backend,'sql/114_owner_email_trial_access.sql'),'utf8'));
 const c={query:(s,p)=>db.query(s,p),end:async()=>{}};
 const tenantId=crypto.randomUUID(),ownerId=crypto.randomUUID(),userId=crypto.randomUUID(),employeeId=crypto.randomUUID();const now=Date.now(),pair=crypto.generateKeyPairSync('rsa',{modulusLength:2048});
 const keys={fixture:pair.publicKey.export({format:'der',type:'spki'}).toString('base64')};const bound={tenantId,ownerId,installationId:crypto.randomUUID(),activationId:crypto.randomUUID(),fingerprint:'fixture'};
 function sign(prefix,extra){const text=prefix+'.'+Buffer.from(JSON.stringify({v:1,issuerKeyId:'fixture',platform:'desktop',...bound,issuedAt:now,expiresAt:now+86400000,...extra})).toString('base64url');return text+'.'+crypto.sign('RSA-SHA256',Buffer.from(text),pair.privateKey).toString('base64url');}
 const claims={...bound,revision:1,foundation:packageFoundation('retail-pharmacy'),limits:{internalAccounts:5},license:{kind:'trial',trialDays:7,graceDays:3,platforms:['desktop'],startedAt:now,expiresAt:now+7*86400000,graceEndsAt:now+10*86400000}};
 const rt={bundle:path.dirname(backend),v:{databases:{live:'fixture'}},client:async()=>c,secrets:{save:async()=>{}}};
-const created=await provision(rt.bundle,c,{localBusinessId:tenantId,cloudOwnerId:ownerId,businessName:'Synthetic Pharmacy',ownerName:'Synthetic owner',email:'owner@fixture.invalid',password:'Synthetic-only-password',foundation:claims.foundation},'live');assert.equal(created.tenantId,tenantId);assert.equal(created.ownerId,ownerId);
+const created=await provision(rt.bundle,c,{localBusinessId:tenantId,cloudOwnerId:ownerId,businessName:'Synthetic Pharmacy',ownerName:'Synthetic owner',email:'owner@fixture.invalid',ownerEmail:'owner@fixture.invalid',password:'Synthetic-only-password',foundation:claims.foundation},'live');assert.equal(created.tenantId,tenantId);assert.equal(created.ownerId,ownerId);
 await installPolicy(rt,c,claims);
 const staff={purpose:'staff',userId,email:'pharmacist@fixture.invalid',fullName:'Synthetic pharmacist',role:'staff',permissions:{general:'view',operations:'edit',retail_checkout:'edit'},credentialVersion:2,passwordChangeAllowed:false,passwordChangeRequired:false,employee:{id:employeeId,fullName:'Synthetic pharmacist',position:'Pharmacist',status:'active',schedules:[{dayOfWeek:'Mon',startTime:'09:00',endTime:'17:00'}]},pharmacist:{licenseNumber:'SYNTHETIC-VERIFIED',validThrough:'2030-01-01',active:true}};const token=sign('GNJLS1',staff);rt.v.cloudBinding={...bound,keys,ownerGrant:sign('GNJTA1',{...claims,email:'owner@fixture.invalid'}),api:'https://fixture.invalid/api',identity:require('../src/cloud-local.cjs').deviceIdentity()};verifyGrant(token,keys,bound,'staff');
 global.fetch=async(url)=>({ok:true,text:async()=>JSON.stringify(url.endsWith('/auth/staff/login')?{accessToken:'cloud-token-never-used-locally',user:{tenantId}}:url.endsWith('/auth/staff/me')?{id:userId,role:'staff'}:{grant:token})});

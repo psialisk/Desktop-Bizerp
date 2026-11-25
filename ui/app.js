@@ -42,6 +42,7 @@ function render(s){current=s;renderSeed(s.localSeed);
   $('localBusinessField').hidden=true;$('networkField').hidden=!network;$('networkUrl').disabled=busy;$('networkUrl').required=network;$('networkUrl').readOnly=!localErpAddress;$('networkUrl').placeholder=localErpAddress?'https://local-erp.example or http://192.168.1.20:3000':'https://bizerpsme.shop';$('localErpToggle').hidden=false;if(network&&!localErpAddress&&$('networkUrl').value!=='https://bizerpsme.shop')$('networkUrl').value='https://bizerpsme.shop';iconText($('localErpToggle'),localErpAddress?'cloud':'pc-display-horizontal',localErpAddress?'Use Business ERP cloud':'Connect Local ERP');$('workflowField').hidden=kind!=='pos';
 
   document.querySelector('[data-kind="customer"]').hidden=!network;
+  $('customerFoundationField').hidden=!network||kind!=='customer';
 
   for(const button of document.querySelectorAll('[data-kind]')){button.classList.toggle('selected',button.dataset.kind===kind);button.setAttribute('aria-pressed',String(button.dataset.kind===kind));}
 
@@ -144,7 +145,7 @@ for(const button of document.querySelectorAll('.reveal'))button.onclick=()=>{con
 
 window.addEventListener('blur',()=>{for(const input of document.querySelectorAll('.password-field input')){input.type='password';input.nextElementSibling.textContent='Show';}});
 
-$('loginForm').onsubmit=event=>{event.preventDefault();const value={mode:network?'network':'local',kind,email:$('email').value,password:$('password').value,server:$('networkUrl').value,workflowId:$('workflow').value};$('password').value='';$('password').type='password';$('showPassword').textContent='Show';perform(()=>api.login(value),network?'Connecting and signing in…':'Opening your local workspace…');};
+$('loginForm').onsubmit=event=>{event.preventDefault();const value={mode:network?'network':'local',kind,email:$('email').value,password:$('password').value,server:$('networkUrl').value,workflowId:$('workflow').value,customerFoundation:$('customerFoundation').value};$('password').value='';$('password').type='password';$('showPassword').textContent='Show';perform(()=>api.login(value),network?'Connecting and signing in…':'Opening your local workspace…');};
 
 $('openLicense').onclick=()=>perform(()=>api.openWindow('license'));
 
@@ -199,3 +200,5 @@ $('cloudSignup').onclick=()=>perform(()=>api.cloudSignup(),'Opening cloud regist
 
 $('syncNow').onclick=()=>perform(async()=>{$('cloudStatus').textContent=await api.syncNow();});
 $('syncHistory').onclick=()=>perform(async()=>{$('syncHistoryRows').textContent=JSON.stringify(await api.syncHistory(),null,2);$('syncHistoryRows').hidden=false;});
+
+$('customerDiscovery').onclick=()=>perform(()=>api.customerDiscovery(),'Opening Pickleball discovery...');
