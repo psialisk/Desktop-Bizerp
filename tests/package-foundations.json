@@ -1,0 +1,874 @@
+{
+  "retail-store": {
+    "packageFamilyId": "retail",
+    "specializationId": "retail-store",
+    "industryId": "retail",
+    "templateId": "retail",
+    "blocks": [
+      "core",
+      "contacts",
+      "documents",
+      "staff",
+      "staff-shifts",
+      "activities",
+      "inventory",
+      "retail-sales",
+      "retail-purchase",
+      "retail-accounting",
+      "financial-reports",
+      "reports-analytics",
+      "retail-pos",
+      "retail-handover",
+      "retail-credit",
+      "retail-loyalty",
+      "operations-calendar"
+    ],
+    "workflowIds": [
+      "retail",
+      "retail-desk"
+    ],
+    "packageLineIds": [
+      "retail-store"
+    ]
+  },
+  "retail-pharmacy": {
+    "packageFamilyId": "retail",
+    "specializationId": "retail-pharmacy",
+    "industryId": "retail",
+    "templateId": "retail",
+    "blocks": [
+      "core",
+      "contacts",
+      "documents",
+      "staff",
+      "staff-shifts",
+      "activities",
+      "inventory",
+      "retail-sales",
+      "retail-purchase",
+      "retail-accounting",
+      "financial-reports",
+      "reports-analytics",
+      "retail-pos",
+      "retail-credit",
+      "retail-loyalty",
+      "retail-pharmacy",
+      "operations-calendar"
+    ],
+    "workflowIds": [
+      "retail"
+    ],
+    "packageLineIds": [
+      "retail-pharmacy"
+    ]
+  },
+  "water-refilling": {
+    "packageFamilyId": "retail",
+    "specializationId": "water-refilling",
+    "industryId": "retail",
+    "templateId": "retail",
+    "blocks": [
+      "core",
+      "contacts",
+      "documents",
+      "staff",
+      "staff-shifts",
+      "activities",
+      "inventory",
+      "retail-sales",
+      "retail-purchase",
+      "retail-accounting",
+      "financial-reports",
+      "reports-analytics",
+      "retail-pos",
+      "water-custody",
+      "delivery-fleet",
+      "retail-credit",
+      "retail-loyalty",
+      "operations-calendar"
+    ],
+    "workflowIds": [
+      "retail",
+      "water-desk"
+    ],
+    "packageLineIds": [
+      "water-refilling"
+    ]
+  },
+  "salon": {
+    "packageFamilyId": "retail",
+    "specializationId": "salon",
+    "industryId": "professional-services",
+    "templateId": "professional-services",
+    "blocks": [
+      "core",
+      "contacts",
+      "documents",
+      "staff",
+      "staff-shifts",
+      "activities",
+      "services",
+      "inventory",
+      "reports-analytics",
+      "salon-appointments",
+      "retail-credit",
+      "retail-loyalty",
+      "operations-calendar"
+    ],
+    "workflowIds": [
+      "salon-desk"
+    ],
+    "packageLineIds": [
+      "salon"
+    ]
+  },
+  "laundry": {
+    "packageFamilyId": "retail",
+    "specializationId": "laundry",
+    "industryId": "professional-services",
+    "templateId": "laundry-shop",
+    "blocks": [
+      "core",
+      "contacts",
+      "documents",
+      "staff",
+      "staff-shifts",
+      "activities",
+      "services",
+      "inventory",
+      "reports-analytics",
+      "laundry-custody",
+      "retail-credit",
+      "retail-loyalty",
+      "operations-calendar"
+    ],
+    "workflowIds": [
+      "laundry"
+    ],
+    "packageLineIds": [
+      "laundry"
+    ]
+  },
+  "food-beverage": {
+    "packageFamilyId": "retail",
+    "specializationId": "food-beverage",
+    "industryId": "food-hospitality",
+    "templateId": "food-hospitality",
+    "blocks": [
+      "core",
+      "contacts",
+      "staff",
+      "staff-shifts",
+      "activities",
+      "inventory",
+      "food",
+      "food-inventory",
+      "reports-analytics",
+      "retail-credit",
+      "retail-loyalty",
+      "operations-calendar"
+    ],
+    "workflowIds": [
+      "food-counter"
+    ],
+    "packageLineIds": [
+      "food-beverage"
+    ]
+  },
+  "auto-repair": {
+    "packageFamilyId": "retail",
+    "specializationId": "auto-repair",
+    "industryId": "trades",
+    "templateId": "trades",
+    "blocks": [
+      "core",
+      "contacts",
+      "staff",
+      "staff-shifts",
+      "activities",
+      "trades",
+      "inventory",
+      "reports-analytics",
+      "auto-intake",
+      "retail-credit",
+      "retail-loyalty",
+      "operations-calendar"
+    ],
+    "workflowIds": [
+      "auto-desk"
+    ],
+    "packageLineIds": [
+      "auto-repair"
+    ]
+  },
+  "services-contracting": {
+    "packageFamilyId": "retail",
+    "specializationId": "services-contracting",
+    "industryId": "trades",
+    "templateId": "trades",
+    "blocks": [
+      "core",
+      "contacts",
+      "documents",
+      "staff",
+      "staff-shifts",
+      "activities",
+      "services",
+      "trades",
+      "inventory",
+      "reports-analytics",
+      "service-visits",
+      "retail-credit",
+      "retail-loyalty",
+      "operations-calendar"
+    ],
+    "workflowIds": [
+      "services-desk"
+    ],
+    "packageLineIds": [
+      "services-contracting"
+    ]
+  },
+  "bookstore": {
+    "packageFamilyId": null,
+    "specializationId": null,
+    "industryId": "retail",
+    "templateId": "bookstore",
+    "blocks": [
+      "core",
+      "contacts",
+      "documents",
+      "staff",
+      "staff-shifts",
+      "activities",
+      "inventory",
+      "retail-sales",
+      "retail-purchase",
+      "retail-accounting",
+      "financial-reports",
+      "reports-analytics",
+      "retail-pos",
+      "retail-credit",
+      "retail-loyalty",
+      "operations-calendar"
+    ],
+    "workflowIds": [
+      "retail"
+    ],
+    "packageLineIds": [
+      "bookstore"
+    ]
+  },
+  "clothing-store": {
+    "packageFamilyId": null,
+    "specializationId": null,
+    "industryId": "retail",
+    "templateId": "clothing-store",
+    "blocks": [
+      "core",
+      "contacts",
+      "documents",
+      "staff",
+      "staff-shifts",
+      "activities",
+      "inventory",
+      "retail-sales",
+      "retail-purchase",
+      "retail-accounting",
+      "financial-reports",
+      "reports-analytics",
+      "retail-pos",
+      "delivery-fleet",
+      "retail-credit",
+      "retail-loyalty",
+      "operations-calendar"
+    ],
+    "workflowIds": [
+      "retail"
+    ],
+    "packageLineIds": [
+      "clothing-store"
+    ]
+  },
+  "furniture-store": {
+    "packageFamilyId": null,
+    "specializationId": null,
+    "industryId": "retail",
+    "templateId": "furniture-store",
+    "blocks": [
+      "core",
+      "contacts",
+      "documents",
+      "staff",
+      "staff-shifts",
+      "activities",
+      "inventory",
+      "retail-sales",
+      "retail-purchase",
+      "retail-accounting",
+      "financial-reports",
+      "reports-analytics",
+      "retail-pos",
+      "delivery-fleet",
+      "retail-credit",
+      "retail-loyalty",
+      "operations-calendar"
+    ],
+    "workflowIds": [
+      "retail"
+    ],
+    "packageLineIds": [
+      "furniture-store"
+    ]
+  },
+  "grocery-store": {
+    "packageFamilyId": null,
+    "specializationId": null,
+    "industryId": "retail",
+    "templateId": "grocery-store",
+    "blocks": [
+      "core",
+      "contacts",
+      "documents",
+      "staff",
+      "staff-shifts",
+      "activities",
+      "inventory",
+      "retail-sales",
+      "retail-purchase",
+      "retail-accounting",
+      "financial-reports",
+      "reports-analytics",
+      "retail-pos",
+      "retail-credit",
+      "retail-loyalty",
+      "operations-calendar"
+    ],
+    "workflowIds": [
+      "retail"
+    ],
+    "packageLineIds": [
+      "grocery-store"
+    ]
+  },
+  "sari-sari": {
+    "packageFamilyId": "retail",
+    "specializationId": "sari-sari",
+    "industryId": "retail",
+    "templateId": "grocery-store",
+    "blocks": [
+      "core",
+      "contacts",
+      "documents",
+      "staff",
+      "staff-shifts",
+      "activities",
+      "inventory",
+      "retail-sales",
+      "retail-purchase",
+      "retail-accounting",
+      "financial-reports",
+      "reports-analytics",
+      "retail-pos",
+      "retail-handover",
+      "retail-credit",
+      "retail-loyalty",
+      "operations-calendar"
+    ],
+    "workflowIds": [
+      "retail"
+    ],
+    "packageLineIds": [
+      "sari-sari"
+    ]
+  },
+  "hardware-store": {
+    "packageFamilyId": null,
+    "specializationId": null,
+    "industryId": "retail",
+    "templateId": "hardware-store",
+    "blocks": [
+      "core",
+      "contacts",
+      "documents",
+      "staff",
+      "staff-shifts",
+      "activities",
+      "inventory",
+      "retail-sales",
+      "retail-purchase",
+      "retail-accounting",
+      "financial-reports",
+      "reports-analytics",
+      "retail-pos",
+      "delivery-fleet",
+      "retail-credit",
+      "retail-loyalty",
+      "operations-calendar"
+    ],
+    "workflowIds": [
+      "retail"
+    ],
+    "packageLineIds": [
+      "hardware-store"
+    ]
+  },
+  "toy-store": {
+    "packageFamilyId": null,
+    "specializationId": null,
+    "industryId": "retail",
+    "templateId": "toy-store",
+    "blocks": [
+      "core",
+      "contacts",
+      "documents",
+      "staff",
+      "staff-shifts",
+      "activities",
+      "inventory",
+      "retail-sales",
+      "retail-purchase",
+      "retail-accounting",
+      "financial-reports",
+      "reports-analytics",
+      "retail-pos",
+      "retail-credit",
+      "retail-loyalty",
+      "operations-calendar"
+    ],
+    "workflowIds": [
+      "retail"
+    ],
+    "packageLineIds": [
+      "toy-store"
+    ]
+  },
+  "boarding-house": {
+    "packageFamilyId": "real-estate",
+    "specializationId": "boarding-house",
+    "industryId": "real-estate",
+    "templateId": "property-management",
+    "blocks": [
+      "core",
+      "contacts",
+      "properties",
+      "rentals",
+      "property-finance",
+      "crm",
+      "documents",
+      "maintenance",
+      "planning",
+      "staff",
+      "reports-analytics"
+    ],
+    "workflowIds": [
+      "lease-collections"
+    ],
+    "packageLineIds": [
+      "boarding-house"
+    ]
+  },
+  "starter": {
+    "packageFamilyId": null,
+    "specializationId": null,
+    "industryId": "real-estate",
+    "templateId": "property-management",
+    "blocks": [
+      "core",
+      "contacts",
+      "properties",
+      "rentals",
+      "property-finance",
+      "crm",
+      "documents",
+      "maintenance",
+      "planning",
+      "staff",
+      "reports-analytics"
+    ],
+    "workflowIds": [
+      "lease-collections"
+    ],
+    "packageLineIds": [
+      "starter"
+    ]
+  },
+  "business": {
+    "packageFamilyId": null,
+    "specializationId": null,
+    "industryId": "real-estate",
+    "templateId": "property-management",
+    "blocks": [
+      "core",
+      "contacts",
+      "properties",
+      "rentals",
+      "property-finance",
+      "crm",
+      "documents",
+      "maintenance",
+      "planning",
+      "staff",
+      "reports-analytics"
+    ],
+    "workflowIds": [
+      "lease-collections"
+    ],
+    "packageLineIds": [
+      "business"
+    ]
+  },
+  "portfolio": {
+    "packageFamilyId": null,
+    "specializationId": null,
+    "industryId": "real-estate",
+    "templateId": "property-management",
+    "blocks": [
+      "core",
+      "contacts",
+      "properties",
+      "rentals",
+      "property-finance",
+      "crm",
+      "documents",
+      "maintenance",
+      "planning",
+      "staff",
+      "reports-analytics"
+    ],
+    "workflowIds": [
+      "lease-collections"
+    ],
+    "packageLineIds": [
+      "portfolio"
+    ]
+  },
+  "hotel": {
+    "packageFamilyId": null,
+    "specializationId": null,
+    "industryId": "real-estate",
+    "templateId": "property-management",
+    "blocks": [
+      "core",
+      "contacts",
+      "properties",
+      "property-finance",
+      "stays",
+      "crm",
+      "documents",
+      "maintenance",
+      "planning",
+      "staff",
+      "reports-analytics"
+    ],
+    "workflowIds": [
+      "hotel"
+    ],
+    "packageLineIds": [
+      "hotel"
+    ]
+  },
+  "agency": {
+    "packageFamilyId": null,
+    "specializationId": null,
+    "industryId": "real-estate",
+    "templateId": "real-estate-agency",
+    "blocks": [
+      "core",
+      "contacts",
+      "properties",
+      "crm",
+      "documents",
+      "staff",
+      "activities",
+      "reports-analytics"
+    ],
+    "workflowIds": [],
+    "packageLineIds": [
+      "agency"
+    ]
+  },
+  "association": {
+    "packageFamilyId": null,
+    "specializationId": null,
+    "industryId": "real-estate",
+    "templateId": "property-owner-association",
+    "blocks": [
+      "core",
+      "contacts",
+      "properties",
+      "property-finance",
+      "association",
+      "documents",
+      "maintenance",
+      "staff",
+      "activities",
+      "reports-analytics"
+    ],
+    "workflowIds": [],
+    "packageLineIds": [
+      "association"
+    ]
+  },
+  "architecture": {
+    "packageFamilyId": null,
+    "specializationId": null,
+    "industryId": "real-estate",
+    "templateId": "architecture-firm",
+    "blocks": [
+      "core",
+      "contacts",
+      "crm",
+      "documents",
+      "staff",
+      "activities",
+      "services",
+      "reports-analytics"
+    ],
+    "workflowIds": [],
+    "packageLineIds": [
+      "architecture"
+    ]
+  },
+  "contractor": {
+    "packageFamilyId": null,
+    "specializationId": null,
+    "industryId": "real-estate",
+    "templateId": "general-contractor",
+    "blocks": [
+      "core",
+      "contacts",
+      "crm",
+      "documents",
+      "staff",
+      "activities",
+      "trades",
+      "inventory",
+      "reports-analytics"
+    ],
+    "workflowIds": [],
+    "packageLineIds": [
+      "contractor"
+    ]
+  },
+  "gardening": {
+    "packageFamilyId": null,
+    "specializationId": null,
+    "industryId": "real-estate",
+    "templateId": "gardening",
+    "blocks": [
+      "core",
+      "contacts",
+      "crm",
+      "documents",
+      "staff",
+      "activities",
+      "trades",
+      "inventory",
+      "reports-analytics"
+    ],
+    "workflowIds": [],
+    "packageLineIds": [
+      "gardening"
+    ]
+  },
+  "restaurant": {
+    "packageFamilyId": "retail",
+    "specializationId": "food-beverage",
+    "industryId": "food-hospitality",
+    "templateId": "food-hospitality",
+    "blocks": [
+      "core",
+      "contacts",
+      "staff",
+      "staff-shifts",
+      "activities",
+      "inventory",
+      "food",
+      "food-inventory",
+      "reports-analytics",
+      "retail-credit",
+      "retail-loyalty",
+      "operations-calendar"
+    ],
+    "workflowIds": [
+      "food-counter"
+    ],
+    "packageLineIds": [
+      "restaurant"
+    ]
+  },
+  "professional-services": {
+    "packageFamilyId": null,
+    "specializationId": null,
+    "industryId": "professional-services",
+    "templateId": "professional-services",
+    "blocks": [
+      "core",
+      "contacts",
+      "documents",
+      "staff",
+      "staff-shifts",
+      "activities",
+      "services",
+      "reports-analytics"
+    ],
+    "workflowIds": [],
+    "packageLineIds": [
+      "professional-services"
+    ]
+  },
+  "trades": {
+    "packageFamilyId": null,
+    "specializationId": null,
+    "industryId": "trades",
+    "templateId": "trades",
+    "blocks": [
+      "core",
+      "contacts",
+      "staff",
+      "staff-shifts",
+      "activities",
+      "trades",
+      "inventory",
+      "reports-analytics"
+    ],
+    "workflowIds": [],
+    "packageLineIds": [
+      "trades"
+    ]
+  },
+  "fitness": {
+    "packageFamilyId": null,
+    "specializationId": null,
+    "industryId": "health-fitness",
+    "templateId": "health-fitness",
+    "blocks": [
+      "core",
+      "contacts",
+      "staff",
+      "activities",
+      "fitness",
+      "pickleball",
+      "reports-analytics"
+    ],
+    "workflowIds": [],
+    "packageLineIds": [
+      "fitness"
+    ]
+  },
+  "gym-fitness": {
+    "packageFamilyId": null,
+    "specializationId": null,
+    "industryId": "health-fitness",
+    "templateId": "health-fitness",
+    "blocks": [
+      "core",
+      "contacts",
+      "staff",
+      "activities",
+      "fitness",
+      "reports-analytics"
+    ],
+    "workflowIds": [],
+    "packageLineIds": [
+      "gym-fitness"
+    ]
+  },
+  "pickleball": {
+    "packageFamilyId": null,
+    "specializationId": null,
+    "industryId": "health-fitness",
+    "templateId": "health-fitness",
+    "blocks": [
+      "core",
+      "contacts",
+      "staff",
+      "activities",
+      "pickleball",
+      "reports-analytics"
+    ],
+    "workflowIds": [],
+    "packageLineIds": [
+      "pickleball"
+    ]
+  },
+  "manufacturing": {
+    "packageFamilyId": null,
+    "specializationId": null,
+    "industryId": "manufacturing",
+    "templateId": "manufacturing",
+    "blocks": [
+      "core",
+      "contacts",
+      "documents",
+      "staff",
+      "inventory",
+      "manufacturing",
+      "reports-analytics"
+    ],
+    "workflowIds": [],
+    "packageLineIds": [
+      "manufacturing"
+    ]
+  },
+  "other": {
+    "packageFamilyId": null,
+    "specializationId": null,
+    "industryId": "other",
+    "templateId": "other",
+    "blocks": [
+      "core",
+      "contacts",
+      "documents",
+      "staff",
+      "activities",
+      "reports-analytics"
+    ],
+    "workflowIds": [],
+    "packageLineIds": [
+      "other"
+    ]
+  },
+  "daily-rentals": {
+    "packageFamilyId": "other",
+    "specializationId": "daily-rentals",
+    "industryId": "other",
+    "templateId": "rental-operations",
+    "blocks": [
+      "core",
+      "contacts",
+      "documents",
+      "staff",
+      "activities",
+      "inventory",
+      "financial-reports",
+      "reports-analytics",
+      "daily-rentals"
+    ],
+    "workflowIds": [],
+    "packageLineIds": [
+      "daily-rentals"
+    ]
+  },
+  "pure-hris": {
+    "packageFamilyId": "human-resources",
+    "specializationId": "pure-hris",
+    "industryId": "human-resources",
+    "templateId": "pure-hris",
+    "blocks": [
+      "core",
+      "contacts",
+      "documents",
+      "staff",
+      "workforce",
+      "financial-reports",
+      "reports-analytics",
+      "payroll"
+    ],
+    "workflowIds": [],
+    "packageLineIds": [
+      "pure-hris"
+    ]
+  }
+}

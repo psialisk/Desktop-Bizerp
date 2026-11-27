@@ -1,0 +1,206 @@
+{
+  "retail-store": {
+    "href": "/dashboard/retail-pos",
+    "label": "General Retail POS",
+    "block": "retail-pos",
+    "feature": "retail-pos"
+  },
+  "retail-pharmacy": {
+    "href": "/dashboard/retail-pos",
+    "label": "Pharmacy POS",
+    "block": "retail-pos",
+    "feature": "retail-pos"
+  },
+  "water-refilling": {
+    "href": "/dashboard/retail-pos",
+    "label": "Water POS",
+    "block": "retail-pos",
+    "feature": "retail-pos"
+  },
+  "salon": {
+    "href": "/dashboard/specialist-operations?workspace=salon",
+    "label": "Salon & Barbershop",
+    "block": "salon-appointments",
+    "feature": "salon"
+  },
+  "laundry": {
+    "href": "/dashboard/laundry",
+    "label": "Laundry POS",
+    "block": "laundry-custody",
+    "feature": "laundry"
+  },
+  "food-beverage": {
+    "aliasOf": "restaurant"
+  },
+  "auto-repair": {
+    "href": "/dashboard/specialist-operations?workspace=auto-repair",
+    "label": "Auto repair reception",
+    "block": "auto-intake",
+    "feature": "auto-repair"
+  },
+  "services-contracting": {
+    "href": "/dashboard/trades",
+    "label": "Jobs & dispatch",
+    "block": "trades",
+    "feature": "trades"
+  },
+  "bookstore": {
+    "href": "/dashboard/retail-pos",
+    "label": "Bookstore POS",
+    "block": "retail-pos",
+    "feature": "retail-pos"
+  },
+  "clothing-store": {
+    "href": "/dashboard/retail-pos",
+    "label": "Clothing Store POS",
+    "block": "retail-pos",
+    "feature": "retail-pos"
+  },
+  "furniture-store": {
+    "href": "/dashboard/retail-pos",
+    "label": "Furniture Store POS",
+    "block": "retail-pos",
+    "feature": "retail-pos"
+  },
+  "grocery-store": {
+    "href": "/dashboard/retail-pos",
+    "label": "Grocery Store POS",
+    "block": "retail-pos",
+    "feature": "retail-pos"
+  },
+  "sari-sari": {
+    "href": "/dashboard/retail-pos",
+    "label": "Sari-sari Store POS",
+    "block": "retail-pos",
+    "feature": "retail-pos"
+  },
+  "hardware-store": {
+    "href": "/dashboard/retail-pos",
+    "label": "Hardware Store POS",
+    "block": "retail-pos",
+    "feature": "retail-pos"
+  },
+  "toy-store": {
+    "href": "/dashboard/retail-pos",
+    "label": "Toy Store POS",
+    "block": "retail-pos",
+    "feature": "retail-pos"
+  },
+  "boarding-house": {
+    "href": "/dashboard/leases",
+    "label": "Leases & tenants",
+    "block": "rentals",
+    "feature": "leases"
+  },
+  "starter": {
+    "href": "/dashboard/leases",
+    "label": "Leases & tenants",
+    "block": "rentals",
+    "feature": "leases"
+  },
+  "business": {
+    "href": "/dashboard/leases",
+    "label": "Leases & tenants",
+    "block": "rentals",
+    "feature": "leases"
+  },
+  "portfolio": {
+    "href": "/dashboard/leases",
+    "label": "Leases & tenants",
+    "block": "rentals",
+    "feature": "leases"
+  },
+  "hotel": {
+    "href": "/dashboard/workspaces?mode=hotel",
+    "label": "Hotel reservations & arrivals",
+    "block": "stays",
+    "feature": "hotel"
+  },
+  "agency": {
+    "href": "/dashboard/industry-operations?workspace=agency",
+    "label": "Agency sales pipeline",
+    "block": "crm",
+    "feature": "agency"
+  },
+  "association": {
+    "href": "/dashboard/workspaces?mode=association",
+    "label": "Owners, occupants & dues",
+    "block": "association",
+    "feature": "association"
+  },
+  "architecture": {
+    "href": "/dashboard/services",
+    "label": "Projects & engagements",
+    "block": "services",
+    "feature": "services"
+  },
+  "contractor": {
+    "href": "/dashboard/trades",
+    "label": "Jobs & dispatch",
+    "block": "trades",
+    "feature": "trades"
+  },
+  "gardening": {
+    "href": "/dashboard/trades",
+    "label": "Gardening jobs & schedules",
+    "block": "trades",
+    "feature": "trades"
+  },
+  "restaurant": {
+    "href": "/dashboard/food-pos",
+    "label": "Food Counter POS",
+    "block": "food",
+    "feature": "food-pos"
+  },
+  "professional-services": {
+    "href": "/dashboard/services",
+    "label": "Service engagements",
+    "block": "services",
+    "feature": "services"
+  },
+  "trades": {
+    "href": "/dashboard/trades",
+    "label": "Jobs & dispatch",
+    "block": "trades",
+    "feature": "trades"
+  },
+  "fitness": {
+    "aliasOf": "gym-fitness"
+  },
+  "gym-fitness": {
+    "href": "/dashboard/fitness",
+    "label": "Gym & fitness",
+    "block": "fitness",
+    "feature": "fitness"
+  },
+  "pickleball": {
+    "href": "/dashboard/pickleball",
+    "label": "Pickleball \u00b7 courts & open play",
+    "block": "pickleball",
+    "feature": "pickleball"
+  },
+  "manufacturing": {
+    "href": "/dashboard/manufacturing",
+    "label": "Production orders & batches",
+    "block": "manufacturing",
+    "feature": "manufacturing"
+  },
+  "other": {
+    "href": "/dashboard/activities",
+    "label": "Business activities",
+    "block": "activities",
+    "feature": "activities"
+  },
+  "daily-rentals": {
+    "href": "/dashboard/daily-rentals",
+    "label": "Rental bookings & returns",
+    "block": "daily-rentals",
+    "feature": "daily-rentals"
+  },
+  "pure-hris": {
+    "href": "/dashboard/hr",
+    "label": "HR workspace",
+    "block": "workforce",
+    "feature": "hr"
+  }
+}

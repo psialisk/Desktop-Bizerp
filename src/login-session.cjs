@@ -28,7 +28,18 @@ async function authenticate(api,input,fetcher=fetch){
  if(!actor.id||input.kind!=='customer'&&!['owner','manager','staff'].includes(actor.role))throw Error('Use a business account, not Super Admin');
  if(input.kind==='customer'&&!health)await jsonRequest(api,'/renter/me/foundation',{token:result.accessToken},fetcher);
  if(input.kind==='pos'){const session=await jsonRequest(api,'/pos/session',{token:result.accessToken},fetcher);if(session.workflowId!==input.workflow.id)throw Error('POS workflow changed; sign in again');}
- return {token:result.accessToken,actor};
+ return {token:result.accessToken,actor,passwordChangeRequired:result.passwordChangeRequired===true};
+}
+async function ownerLanding(api,auth,preferred,fetcher=fetch){
+ if(auth.passwordChangeRequired)return '/dashboard/profile';
+ try{
+  const foundation=await jsonRequest(api,'/foundation',{token:auth.token},fetcher);
+  const home=require('./package-workspace/package-workspace.js').packageWorkspace(foundation,auth.actor,preferred);
+  if(home.feature==='salon'){
+   try{const {actor}=await jsonRequest(api,'/salon/context',{token:auth.token},fetcher);return home.href+'&view='+(actor.stylistOnly?'mine':!actor.owner&&actor.canCheckout?'cashier':'today');}catch{}
+  }
+  return home.href;
+ }catch{return '/dashboard';}
 }
 // Electron rejects loadURL with ERR_ABORTED whenever the page answers with a redirect,
 // even though the navigation itself succeeded. The workspace login routes redirect
@@ -89,7 +100,9 @@ class WorkspaceLogin{
    const key=input.kind==='owner'?'staff_token':input.kind==='customer'?(input.customerFoundation==='health'?'consumer_token':'renter_token'):'pos_token';
    await wc.executeJavaScript(`(()=>{for(const key of ['staff_token','pos_token','renter_token','consumer_token'])localStorage.removeItem(key);localStorage.setItem(${JSON.stringify(key)},${JSON.stringify(auth.token)});})()`);
    if(entry.desktopContext)entry.desktopContext.principalId=auth.actor.id;
-   await load(target.origin+(input.kind==='owner'?'/dashboard':input.kind==='customer'?(input.customerFoundation==='health'?'/discover/health':'/renter-portal'):workflow.route));
+   const preferred=input.kind==='owner'?await wc.executeJavaScript('localStorage.getItem('+JSON.stringify('primary-package:'+auth.actor.id)+')'):undefined;
+   const home=input.kind==='owner'?await ownerLanding(target.api,auth,preferred):null;
+   await load(target.origin+(input.kind==='owner'?home:input.kind==='customer'?(input.customerFoundation==='health'?'/discover/health':'/renter-portal'):workflow.route));
    this.opening=null;this.active=entry;this.workspaces.add(entry);this.control.contentView.addChildView(view);this.resize();wc.focus();
    const navigate=(_event,url,mainFrame)=>{if(this.active!==entry||mainFrame===false||new URL(url).origin!==target.origin)return;const pathname=new URL(url).pathname;
     if(['/', '/business-login','/staff-login','/pos-login','/user-login','/renter-login','/customer-login/real-estate','/customer-login'].includes(pathname)){rt.message('The workspace asked for a sign-in again after Desktop signed in, so this local session was not accepted.');this.close(entry);}
@@ -112,4 +125,4 @@ class WorkspaceLogin{
   const actor=await jsonRequest(entry.api,'/auth/staff/me',{token});if(actor.id!==entry.actor.id||actor.role!=='owner')throw Error('Local owner access required');return actor;
  }
 }
-module.exports={connection,credentialInput,authenticate,jsonRequest,loadWorkspace,WorkspaceLogin,localSignInFailure};
+module.exports={connection,credentialInput,authenticate,jsonRequest,ownerLanding,loadWorkspace,WorkspaceLogin,localSignInFailure};

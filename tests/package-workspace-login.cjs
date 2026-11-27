@@ -1,0 +1,7 @@
+const assert=require('node:assert/strict'),{ownerLanding}=require('../src/login-session.cjs');
+const fixtures=require('./package-foundations.json'),mapping=require('../src/package-workspace/package-workspaces.json');
+const owner={id:'fixture-owner',role:'owner',permissions:Object.fromEntries(['general','operations','finance','marketing','admin','human_resource','retail_checkout'].map(k=>[k,'edit']))};
+(async()=>{for(const [id,f]of Object.entries(fixtures)){const fetcher=async(url)=>new Response(JSON.stringify(url.endsWith('/salon/context')?{actor:{owner:true}}:f));const raw=mapping[id],e=raw.aliasOf?mapping[raw.aliasOf]:raw;for(let i=0;i<2;i++){const home=await ownerLanding('https://fixture.invalid/api',{token:'fixture-token',actor:owner},undefined,fetcher);assert.equal(home,e.href+(id==='salon'?'&view=today':''),id);}}
+assert.equal(await ownerLanding('https://fixture.invalid/api',{token:'t',actor:owner,passwordChangeRequired:true},undefined,()=>{throw Error('must not fetch')}),'/dashboard/profile');
+const f=fixtures['salon'];for(const [actor,view]of [[{stylistOnly:true},'mine'],[{canCheckout:true},'cashier']])assert.equal(await ownerLanding('https://fixture.invalid/api',{token:'t',actor:owner},undefined,async url=>new Response(JSON.stringify(url.endsWith('/salon/context')?{actor}:f))),'/dashboard/specialist-operations?workspace=salon&view='+view);
+console.log('PASS Desktop all35 package aliases, repeated login, salon roles and password-update precedence');})().catch(e=>{console.error(e);process.exitCode=1});

@@ -1,0 +1,1864 @@
+{
+  "industries": [
+    {
+      "id": "real-estate",
+      "name": "Real estate & property services"
+    },
+    {
+      "id": "retail",
+      "name": "Retail"
+    },
+    {
+      "id": "food-hospitality",
+      "name": "Food & hospitality"
+    },
+    {
+      "id": "professional-services",
+      "name": "Professional services"
+    },
+    {
+      "id": "trades",
+      "name": "Trades"
+    },
+    {
+      "id": "health-fitness",
+      "name": "Health & fitness"
+    },
+    {
+      "id": "manufacturing",
+      "name": "Manufacturing"
+    },
+    {
+      "id": "human-resources",
+      "name": "Human Resources"
+    },
+    {
+      "id": "other",
+      "name": "Other industries"
+    }
+  ],
+  "blocks": [
+    {
+      "id": "core",
+      "name": "Business core",
+      "description": "Tenant isolation, roles and audit records.",
+      "status": "ready",
+      "required": true,
+      "dependencies": [],
+      "routes": []
+    },
+    {
+      "id": "contacts",
+      "name": "Shared contacts",
+      "description": "People and organizations with several roles.",
+      "status": "ready",
+      "required": true,
+      "dependencies": [
+        "core"
+      ],
+      "routes": [
+        "/dashboard/contacts"
+      ]
+    },
+    {
+      "id": "properties",
+      "name": "Properties & spaces",
+      "description": "Property, unit and accommodation records.",
+      "status": "ready",
+      "dependencies": [
+        "contacts"
+      ],
+      "routes": [
+        "/dashboard/properties",
+        "/dashboard/units",
+        "/dashboard/beds"
+      ]
+    },
+    {
+      "id": "rentals",
+      "name": "Leases & contracts",
+      "description": "Monthly rental agreements and renter records.",
+      "status": "ready",
+      "dependencies": [
+        "properties"
+      ],
+      "routes": [
+        "/dashboard/leases",
+        "/dashboard/contracts",
+        "/dashboard/renters"
+      ]
+    },
+    {
+      "id": "property-finance",
+      "name": "Property finance",
+      "description": "Property invoices, payments, expenses and journals; general service/retail invoicing is not implemented.",
+      "status": "ready",
+      "dependencies": [
+        "properties"
+      ],
+      "routes": [
+        "/dashboard/accounting",
+        "/dashboard/payments",
+        "/dashboard/expenses",
+        "/dashboard/reconciliation",
+        "/dashboard/settlements"
+      ]
+    },
+    {
+      "id": "association",
+      "name": "Association workspace",
+      "description": "Named owners, occupants and assessments; owner must enable Association mode separately.",
+      "status": "ready",
+      "dependencies": [
+        "property-finance"
+      ],
+      "routes": [
+        "/dashboard/workspaces"
+      ]
+    },
+    {
+      "id": "stays",
+      "name": "Hotel & short stays",
+      "description": "Manual bookings and room readiness; owner must enable the relevant property mode.",
+      "status": "ready",
+      "dependencies": [
+        "properties"
+      ],
+      "routes": [
+        "/dashboard/workspaces"
+      ]
+    },
+    {
+      "id": "crm",
+      "name": "CRM foundation",
+      "description": "Leads and follow-ups; current conversion targets renters, not agency sales.",
+      "status": "ready",
+      "dependencies": [
+        "contacts"
+      ],
+      "routes": [
+        "/dashboard/leads",
+        "/dashboard/marketing"
+      ]
+    },
+    {
+      "id": "documents",
+      "name": "Documents",
+      "description": "Business files and contract references.",
+      "status": "ready",
+      "dependencies": [
+        "core"
+      ],
+      "routes": [
+        "/dashboard/documents"
+      ]
+    },
+    {
+      "id": "maintenance",
+      "name": "Property maintenance",
+      "description": "Property issues, vendors and work orders.",
+      "status": "ready",
+      "dependencies": [
+        "properties"
+      ],
+      "routes": [
+        "/dashboard/maintenance",
+        "/dashboard/vendors"
+      ]
+    },
+    {
+      "id": "planning",
+      "name": "Property planning",
+      "description": "Property operational calendar; not a general resource planner.",
+      "status": "ready",
+      "dependencies": [
+        "properties"
+      ],
+      "routes": [
+        "/dashboard/scheduling"
+      ]
+    },
+    {
+      "id": "staff",
+      "name": "Team access",
+      "description": "Staff identities and locked permission presets.",
+      "status": "ready",
+      "dependencies": [
+        "core"
+      ],
+      "routes": [
+        "/dashboard/team",
+        "/dashboard/hr",
+        "/dashboard/hr/staff"
+      ]
+    },
+    {
+      "id": "staff-shifts",
+      "name": "Shift calendar",
+      "description": "Dated staff shifts without compensation or attendance setup.",
+      "status": "ready",
+      "dependencies": [
+        "staff"
+      ],
+      "routes": [
+        "/dashboard/team/shifts"
+      ]
+    },
+    {
+      "id": "activities",
+      "name": "Business activities",
+      "description": "Categories, assignments, due dates and progress notes.",
+      "status": "ready",
+      "dependencies": [
+        "contacts"
+      ],
+      "routes": [
+        "/dashboard/activities"
+      ]
+    },
+    {
+      "id": "services",
+      "name": "Engagements & actual time",
+      "description": "Customer work and reviewed time; no service invoices.",
+      "status": "ready",
+      "dependencies": [
+        "contacts",
+        "staff"
+      ],
+      "routes": [
+        "/dashboard/services"
+      ]
+    },
+    {
+      "id": "trades",
+      "name": "Jobs & dispatch",
+      "description": "Customer site jobs and technician schedules; no quotes or job invoices.",
+      "status": "ready",
+      "dependencies": [
+        "contacts",
+        "staff"
+      ],
+      "routes": [
+        "/dashboard/trades"
+      ]
+    },
+    {
+      "id": "inventory",
+      "name": "Products & stock",
+      "description": "Shared catalog, warehouse quantities, transfers and optional approved weighted-average valuation.",
+      "status": "ready",
+      "dependencies": [
+        "core"
+      ],
+      "routes": [
+        "/dashboard/retail",
+        "/dashboard/inventory-control",
+        "/dashboard/retail-catalog",
+        "/dashboard/inventory-operations"
+      ]
+    },
+    {
+      "id": "food",
+      "name": "Menu & kitchen orders",
+      "description": "Menu, optional table tags, kitchen orders, Food Counter POS, invoices and recipe costing.",
+      "status": "ready",
+      "dependencies": [
+        "contacts"
+      ],
+      "routes": [
+        "/dashboard/food",
+        "/dashboard/food-pos",
+        "/dashboard/food-finance",
+        "/dashboard/food-recipes",
+        "/dashboard/expenses"
+      ]
+    },
+    {
+      "id": "food-inventory",
+      "name": "Kitchen ingredient inventory",
+      "description": "Recipe-linked ingredient quantities and reorder status using shared Inventory stock movements.",
+      "status": "ready",
+      "required": false,
+      "dependencies": [
+        "food",
+        "inventory"
+      ],
+      "routes": [
+        "/dashboard/food-inventory"
+      ]
+    },
+    {
+      "id": "fitness",
+      "name": "Memberships & classes",
+      "description": "Member records, instructor-led classes and capacity-managed class bookings.",
+      "status": "ready",
+      "dependencies": [
+        "contacts",
+        "staff"
+      ],
+      "routes": [
+        "/dashboard/fitness"
+      ]
+    },
+    {
+      "id": "pickleball",
+      "name": "Courts & open play",
+      "description": "Court availability and reservations, plus capacity-managed open-play sessions.",
+      "status": "ready",
+      "dependencies": [
+        "contacts",
+        "staff"
+      ],
+      "routes": [
+        "/dashboard/pickleball"
+      ]
+    },
+    {
+      "id": "manufacturing",
+      "name": "BOMs & production",
+      "description": "BOMs, component consumption, finished stock and optional material-cost WIP posting.",
+      "status": "ready",
+      "dependencies": [
+        "inventory"
+      ],
+      "routes": [
+        "/dashboard/manufacturing"
+      ]
+    },
+    {
+      "id": "retail-sales",
+      "name": "Retail sales",
+      "description": "Customer orders, partial fulfillment, internal invoices/packing lists and return credit notes.",
+      "status": "ready",
+      "dependencies": [
+        "inventory",
+        "contacts"
+      ],
+      "routes": [
+        "/dashboard/retail-sales",
+        "/dashboard/retail-store"
+      ]
+    },
+    {
+      "id": "retail-purchase",
+      "name": "Retail purchasing",
+      "description": "Independently approved supplier orders, partial receiving, invoice matching and supplier returns.",
+      "status": "ready",
+      "dependencies": [
+        "inventory",
+        "contacts"
+      ],
+      "routes": [
+        "/dashboard/retail-purchase"
+      ]
+    },
+    {
+      "id": "retail-accounting",
+      "name": "Retail accounting",
+      "description": "Stock-policy-aware journals, receivables/payables, credits/refunds, valuation and costed shipment margins.",
+      "status": "ready",
+      "dependencies": [
+        "retail-sales",
+        "retail-purchase",
+        "financial-reports"
+      ],
+      "routes": [
+        "/dashboard/retail-accounting"
+      ]
+    },
+    {
+      "id": "retail-payroll",
+      "name": "Retail payroll",
+      "description": "Reviewed payroll, configured contributions, remittances and employee statements; no statutory rate tables.",
+      "status": "ready",
+      "dependencies": [
+        "staff",
+        "retail-accounting"
+      ],
+      "routes": [
+        "/dashboard/retail-payroll"
+      ]
+    },
+    {
+      "id": "sign",
+      "name": "Electronic signatures",
+      "description": "Signing-provider workflow and evidence.",
+      "status": "planned",
+      "dependencies": [],
+      "routes": []
+    },
+    {
+      "id": "projects",
+      "name": "Projects & milestones",
+      "description": "Linked tasks, dependencies and budgets.",
+      "status": "planned",
+      "dependencies": [],
+      "routes": []
+    },
+    {
+      "id": "sales",
+      "name": "Service sales & invoicing",
+      "description": "Quotes, sales orders and non-renter billing.",
+      "status": "planned",
+      "dependencies": [],
+      "routes": []
+    },
+    {
+      "id": "purchase",
+      "name": "Purchasing",
+      "description": "Requests, purchase orders and receiving.",
+      "status": "planned",
+      "dependencies": [],
+      "routes": []
+    },
+    {
+      "id": "workforce",
+      "name": "Attendance, leave & HR calendar",
+      "description": "Employee records, dated rosters, approved attendance, leave balances, self-service and the HR calendar.",
+      "status": "ready",
+      "dependencies": [
+        "staff"
+      ],
+      "routes": [
+        "/dashboard/workforce",
+        "/dashboard/my-work",
+        "/dashboard/workforce/planning",
+        "/dashboard/my-work/planning",
+        "/dashboard/hr/calendar"
+      ]
+    },
+    {
+      "id": "financial-reports",
+      "name": "Financial reports",
+      "description": "Tenant-wide trial balance, income and balance sheet from posted journals; ended-month posting locks.",
+      "status": "ready",
+      "dependencies": [
+        "core"
+      ],
+      "routes": [
+        "/dashboard/financial-reports"
+      ]
+    },
+    {
+      "id": "reports-analytics",
+      "name": "Reports & analytics",
+      "description": "General report catalog and BI dashboards included with every package: sales, finance, expense and audit reports run only from this business's recorded source data, and an unavailable report names the data it still needs.",
+      "status": "ready",
+      "required": true,
+      "dependencies": [
+        "core"
+      ],
+      "routes": [
+        "/dashboard/reports"
+      ]
+    },
+    {
+      "id": "retail-pos",
+      "name": "Retail checkout",
+      "status": "ready",
+      "required": true,
+      "description": "Online cashier sessions, scan-to-cart and atomic sales with manually recorded tenders. No offline sync, terminals or fiscal certification.",
+      "dependencies": [
+        "inventory",
+        "retail-sales",
+        "retail-accounting",
+        "staff"
+      ],
+      "routes": [
+        "/dashboard/retail-pos"
+      ]
+    },
+    {
+      "id": "payroll",
+      "name": "Payroll",
+      "description": "Computed payroll from approved attendance, overtime and unpaid leave, with seeded Philippine SSS, PhilHealth, Pag-IBIG and withholding-tax rules, dual review, payouts, remittances and payslips.",
+      "status": "ready",
+      "dependencies": [
+        "workforce",
+        "financial-reports"
+      ],
+      "routes": [
+        "/dashboard/payroll",
+        "/dashboard/hr/calendar"
+      ]
+    },
+    {
+      "id": "water-custody",
+      "name": "Water: container custody",
+      "description": "Optional typed operational workflow. Uses existing source records; does not post money or stock. Enable independently from other specializations.",
+      "status": "ready",
+      "dependencies": [
+        "inventory",
+        "contacts"
+      ],
+      "routes": [
+        "/dashboard/specialist-operations"
+      ]
+    },
+    {
+      "id": "salon-appointments",
+      "name": "Salon: appointments",
+      "description": "Optional typed operational workflow. Uses existing source records; does not post money or stock. Enable independently from other specializations.",
+      "status": "ready",
+      "dependencies": [
+        "services",
+        "staff"
+      ],
+      "routes": [
+        "/dashboard/specialist-operations"
+      ]
+    },
+    {
+      "id": "laundry-custody",
+      "name": "Laundry: intake, pricing & counter",
+      "description": "Laundry tickets, service price list, counter payment, receipts and cash sessions on the shared services foundation.",
+      "status": "ready",
+      "dependencies": [
+        "services"
+      ],
+      "routes": [
+        "/dashboard/laundry",
+        "/dashboard/specialist-operations"
+      ]
+    },
+    {
+      "id": "food-pickup",
+      "name": "Food: takeaway pickup",
+      "description": "Optional typed operational workflow. Uses existing source records; does not post money or stock. Enable independently from other specializations.",
+      "status": "ready",
+      "dependencies": [
+        "food"
+      ],
+      "routes": [
+        "/dashboard/specialist-operations"
+      ]
+    },
+    {
+      "id": "auto-intake",
+      "name": "Auto repair: vehicle intake",
+      "description": "Optional typed operational workflow. Uses existing source records; does not post money or stock. Enable independently from other specializations.",
+      "status": "ready",
+      "dependencies": [
+        "trades",
+        "inventory"
+      ],
+      "routes": [
+        "/dashboard/specialist-operations"
+      ]
+    },
+    {
+      "id": "retail-handover",
+      "name": "Retail: pick, pack & handover",
+      "description": "Optional typed operational workflow. Uses existing source records; does not post money or stock. Enable independently from other specializations.",
+      "status": "ready",
+      "dependencies": [
+        "retail-sales"
+      ],
+      "routes": [
+        "/dashboard/specialist-operations"
+      ]
+    },
+    {
+      "id": "service-visits",
+      "name": "Services: site visits",
+      "description": "Optional typed operational workflow. Uses existing source records; does not post money or stock. Enable independently from other specializations.",
+      "status": "ready",
+      "dependencies": [
+        "contacts",
+        "staff"
+      ],
+      "routes": [
+        "/dashboard/specialist-operations"
+      ]
+    },
+    {
+      "id": "delivery-fleet",
+      "name": "Delivery fleet management",
+      "description": "Shared vehicles, employee assignments, trip manifests, delivery outcomes and independently reviewed collection evidence. No automatic stock or financial posting.",
+      "status": "ready",
+      "dependencies": [
+        "contacts",
+        "inventory",
+        "staff"
+      ],
+      "routes": [
+        "/dashboard/delivery-fleet"
+      ]
+    },
+    {
+      "id": "retail-credit",
+      "name": "Customer credit (Utang)",
+      "description": "Owner-approved customer credit limits, due dates, sale-linked receivables and repayments. No cash loans or interest.",
+      "status": "ready",
+      "dependencies": [
+        "contacts"
+      ],
+      "routes": [
+        "/dashboard/customer-accounts"
+      ]
+    },
+    {
+      "id": "retail-loyalty",
+      "name": "Suki rewards",
+      "description": "Opt-in promotional points or stamps for explicitly eligible paid products, with source-linked redemption and return reversals.",
+      "status": "ready",
+      "dependencies": [
+        "contacts"
+      ],
+      "routes": [
+        "/dashboard/customer-accounts"
+      ]
+    },
+    {
+      "id": "retail-pharmacy",
+      "name": "Retail Pharmacy",
+      "description": "Medicine lots, expiry, pharmacist review and prescription dispensing. Uploads are not yet available.",
+      "status": "ready",
+      "dependencies": [
+        "inventory",
+        "contacts",
+        "retail-sales",
+        "retail-purchase",
+        "retail-pos",
+        "staff"
+      ],
+      "routes": [
+        "/dashboard/pharmacy"
+      ]
+    },
+    {
+      "id": "operations-calendar",
+      "name": "Operational calendar",
+      "description": "Source-derived Retail-family commitments, reminders and operational tasks, independent of Property planning.",
+      "status": "ready",
+      "dependencies": [
+        "contacts"
+      ],
+      "routes": [
+        "/dashboard/operational-calendar"
+      ]
+    },
+    {
+      "id": "daily-rentals",
+      "name": "Daily rentals",
+      "description": "Vehicle, equipment and space rentals with asset availability, customer bookings, deposits, release and return evidence.",
+      "status": "ready",
+      "dependencies": [
+        "contacts",
+        "staff"
+      ],
+      "routes": [
+        "/dashboard/daily-rentals"
+      ]
+    }
+  ],
+  "templates": [
+    {
+      "id": "property-management",
+      "industryId": "real-estate",
+      "name": "Property management",
+      "headline": "A clearer view of every property.",
+      "summary": "Connect your portfolio, agreements, collections and maintenance in one operating foundation.",
+      "workflow": [
+        "Organize properties and spaces",
+        "Link renters and agreements",
+        "Review dues and verified payments",
+        "Coordinate maintenance and follow-ups"
+      ],
+      "blocks": [
+        "properties",
+        "rentals",
+        "property-finance",
+        "maintenance",
+        "planning",
+        "documents",
+        "staff",
+        "crm"
+      ],
+      "limits": "Statements, period closing, online payments and automated booking integrations still need extension."
+    },
+    {
+      "id": "real-estate-agency",
+      "industryId": "real-estate",
+      "name": "Real estate agency",
+      "headline": "Keep every inquiry moving.",
+      "summary": "Start with leads, shared contacts, property records and document coordination.",
+      "workflow": [
+        "Record a property inquiry",
+        "Follow the relationship",
+        "Keep property details and documents close",
+        "Coordinate the next action"
+      ],
+      "blocks": [
+        "crm",
+        "properties",
+        "documents",
+        "activities",
+        "staff"
+      ],
+      "limits": "Public sales listings, buyer matching, viewings, commissions and sale closing are not yet dedicated workflows."
+    },
+    {
+      "id": "architecture-firm",
+      "industryId": "real-estate",
+      "name": "Architecture firm",
+      "headline": "Bring client work into focus.",
+      "summary": "Connect client engagements, staff leads, actual time and business documents.",
+      "workflow": [
+        "Organize client contacts",
+        "Define the engagement",
+        "Assign a lead and record actual time",
+        "Review time and coordinate documents"
+      ],
+      "blocks": [
+        "services",
+        "documents",
+        "activities",
+        "crm"
+      ],
+      "limits": "CAD collaboration, project milestones, quotations, signing and service invoices are planned."
+    },
+    {
+      "id": "general-contractor",
+      "industryId": "real-estate",
+      "name": "General contractor",
+      "headline": "Keep site work connected to the office.",
+      "summary": "Coordinate customer jobs, technician schedules, material quantities and site documents.",
+      "workflow": [
+        "Record the customer and site",
+        "Plan a technician interval",
+        "Track work through completion",
+        "Keep stock records and documents accessible"
+      ],
+      "blocks": [
+        "trades",
+        "inventory",
+        "documents",
+        "activities",
+        "crm"
+      ],
+      "limits": "Jobs do not automatically deduct stock. Quotes, procurement, project costing and progress billing are planned."
+    },
+    {
+      "id": "gardening",
+      "industryId": "real-estate",
+      "name": "Gardening & landscaping",
+      "headline": "Plan the next visit. Keep the work in view.",
+      "summary": "Connect customer site jobs, staff schedules and supply records for garden service operations.",
+      "workflow": [
+        "Capture the customer request",
+        "Assign a site visit",
+        "Track completion notes",
+        "Review supply quantities and follow-ups"
+      ],
+      "blocks": [
+        "trades",
+        "inventory",
+        "activities",
+        "documents",
+        "crm"
+      ],
+      "limits": "Recurring visits, route optimization, job-linked materials, landscaping quotes and customer invoicing are planned."
+    },
+    {
+      "id": "property-owner-association",
+      "industryId": "real-estate",
+      "name": "Property owner association",
+      "headline": "Keep your community records together.",
+      "summary": "Coordinate unit ownership, resident billing records, maintenance and documents.",
+      "workflow": [
+        "Organize properties and unit owners",
+        "Record dues and assessments",
+        "Review payments and shared costs",
+        "Coordinate maintenance and community activities"
+      ],
+      "blocks": [
+        "association",
+        "maintenance",
+        "documents",
+        "activities",
+        "staff"
+      ],
+      "limits": "Association mode must be enabled by the owner. Percentage cost allocation, voting and reserve-fund workflows are not implemented."
+    },
+    {
+      "id": "retail",
+      "industryId": "retail",
+      "name": "Retail store",
+      "headline": "Keep products and stock in view.",
+      "summary": "Connect your store catalog, orders, receiving, retail balances and staff in one workspace.",
+      "workflow": [
+        "Maintain SKUs and stock",
+        "Confirm orders and receive or fulfill",
+        "Review balances and record settlements",
+        "Approve payroll and coordinate store tasks"
+      ],
+      "blocks": [
+        "inventory",
+        "retail-sales",
+        "retail-purchase",
+        "retail-accounting",
+        "activities",
+        "staff",
+        "documents",
+        "retail-pos",
+        "retail-credit",
+        "retail-loyalty",
+        "staff-shifts"
+      ],
+      "limits": "Internal documents only; no VAT/fiscal certification, supplier bill variances, statutory rate tables or online-store/payment-provider integration. Opening valuation and payroll rules require owner review."
+    },
+    {
+      "id": "food-hospitality",
+      "industryId": "food-hospitality",
+      "name": "Restaurant or studio kitchen",
+      "headline": "Connect your menu to the kitchen.",
+      "summary": "Cashier-friendly Food POS with Pay Before Prep or Prep Before Pay, optional table tags, kitchen workflow, invoices and recipe costing.",
+      "workflow": [
+        "Create menu items",
+        "Choose Pay Before Prep or Prep Before Pay, then take dine-in or takeaway orders",
+        "Track preparation; deduct recipe ingredients when preparation starts if Kitchen Inventory is enabled",
+        "Record serving"
+      ],
+      "blocks": [
+        "food",
+        "staff",
+        "activities",
+        "staff-shifts"
+      ],
+      "limits": "Online customer ordering, tax configuration, reservations, printer integration, dedicated mobile apps and automatic stock-based menu availability remain planned. Actual recipe cost is estimated from configured ingredient costs; weighted-average Inventory valuation is not yet integrated into the calculator."
+    },
+    {
+      "id": "laundry-shop",
+      "industryId": "professional-services",
+      "name": "Laundry shop",
+      "headline": "Price every load. Take payment at the counter.",
+      "summary": "Laundry intake, price list, mixed kg and piece tickets, counter collection and cash sessions on the shared services foundation.",
+      "workflow": [
+        "Set up the laundry price list",
+        "Receive a load and generate bag codes",
+        "Price the ticket and collect payment",
+        "Progress production and release every bag"
+      ],
+      "blocks": [
+        "services",
+        "laundry-custody",
+        "retail-credit",
+        "retail-loyalty",
+        "contacts",
+        "staff",
+        "staff-shifts",
+        "documents",
+        "activities"
+      ],
+      "limits": "Counter price list, payment and receipt are included. SMS, rider delivery, garment tags, machine monitoring and offline mode remain planned."
+    },
+    {
+      "id": "professional-services",
+      "industryId": "professional-services",
+      "name": "Professional services",
+      "headline": "Keep engagements and actual time together.",
+      "summary": "Client work with reviewed time records.",
+      "workflow": [
+        "Link a customer",
+        "Activate an engagement",
+        "Submit actual time",
+        "Review work records"
+      ],
+      "blocks": [
+        "services",
+        "documents",
+        "activities",
+        "staff",
+        "staff-shifts"
+      ],
+      "limits": "Service billing, payroll and project milestones are planned."
+    },
+    {
+      "id": "trades",
+      "industryId": "trades",
+      "name": "Trades business",
+      "headline": "From request to completed site work.",
+      "summary": "Customer jobs and technician dispatch.",
+      "workflow": [
+        "Record a site job",
+        "Schedule a technician",
+        "Track progress",
+        "Record completion"
+      ],
+      "blocks": [
+        "trades",
+        "inventory",
+        "activities",
+        "staff",
+        "staff-shifts"
+      ],
+      "limits": "Quotes, material deduction and invoicing are planned."
+    },
+    {
+      "id": "health-fitness",
+      "industryId": "health-fitness",
+      "name": "Gym, studio or pickleball venue",
+      "headline": "Health & Fitness Foundation",
+      "summary": "Choose Gym / Fitness for memberships and classes, or Pickleball for court reservations and open play.",
+      "workflow": [
+        "Create a membership",
+        "Schedule an instructor",
+        "Book eligible members",
+        "Manage class capacity",
+        "Set up courts and avoid double-booking",
+        "Host open play with player limits"
+      ],
+      "blocks": [
+        "fitness",
+        "pickleball",
+        "activities"
+      ],
+      "limits": "Online payment and accounting posting are not included. Court and open-play fees are tracking records. Tournaments are planned. No medical records are collected."
+    },
+    {
+      "id": "manufacturing",
+      "industryId": "manufacturing",
+      "name": "Production business",
+      "headline": "Connect recipes to stock movements.",
+      "summary": "BOMs and full-quantity production orders.",
+      "workflow": [
+        "Define a BOM",
+        "Create a production order",
+        "Consume components",
+        "Receive finished goods"
+      ],
+      "blocks": [
+        "manufacturing",
+        "documents",
+        "staff"
+      ],
+      "limits": "Costing, partial production, scrap and production returns are planned."
+    },
+    {
+      "id": "other",
+      "industryId": "other",
+      "name": "Specialized business",
+      "headline": "Give your coordination work a home.",
+      "summary": "Shared activities for emerging business workflows.",
+      "workflow": [
+        "Define an activity",
+        "Link a contact",
+        "Assign staff and due dates",
+        "Track progress"
+      ],
+      "blocks": [
+        "activities",
+        "documents",
+        "staff"
+      ],
+      "limits": "This is not a nonprofit accounting, specialized rental or custom application builder."
+    },
+    {
+      "id": "pure-hris",
+      "industryId": "human-resources",
+      "name": "Pure HRIS",
+      "headline": "People operations in one focused workspace.",
+      "summary": "Manage employee records, attendance, leave, payroll, payslips and HR documents without unrelated business operations.",
+      "workflow": [
+        "Set up departments and employee records",
+        "Review attendance, leave and shift records",
+        "Prepare and approve payroll",
+        "Record payouts and review employee payslips"
+      ],
+      "blocks": [
+        "staff",
+        "workforce",
+        "payroll",
+        "financial-reports",
+        "documents"
+      ],
+      "limits": "Payroll uses the existing BizERP payroll and finance controls. HR records and employee documents use BizERP tenant storage and permissions."
+    },
+    {
+      "id": "rental-operations",
+      "industryId": "other",
+      "name": "Daily rentals",
+      "headline": "Know what is out, when it is due and who has it.",
+      "summary": "Daily vehicle and equipment rentals with an availability-aware booking ledger.",
+      "workflow": [
+        "Register each rentable asset",
+        "Reserve a customer and date window",
+        "Release the asset at pickup",
+        "Record the return and deposit"
+      ],
+      "blocks": [
+        "daily-rentals",
+        "contacts",
+        "staff",
+        "activities",
+        "documents",
+        "financial-reports"
+      ],
+      "limits": "Bookings are operational commitments, not invoices or payments. Invoicing, deposit application and collections stay in existing finance workflows; no online channel or availability marketplace is connected."
+    },
+    {
+      "id": "bookstore",
+      "industryId": "retail",
+      "name": "Bookstore",
+      "headline": "ISBN catalog and distributor purchasing",
+      "summary": "ISBN catalog and distributor purchasing. Built on the shared retail foundation.",
+      "workflow": [
+        "Maintain store-specific catalog",
+        "Review stock and replenishment",
+        "Quote or check out customer purchases",
+        "Review collections and team access"
+      ],
+      "blocks": [
+        "inventory",
+        "retail-sales",
+        "retail-purchase",
+        "retail-accounting",
+        "activities",
+        "staff",
+        "documents",
+        "retail-pos",
+        "retail-credit",
+        "retail-loyalty",
+        "staff-shifts"
+      ],
+      "limits": "Book metadata, ISBN validation, stock and online checkout. Consignment and live ISBN lookup remain future work."
+    },
+    {
+      "id": "clothing-store",
+      "industryId": "retail",
+      "name": "Clothing store",
+      "headline": "Size and color variants with included delivery",
+      "summary": "Size and color variants, store stock and delivery dispatch. Built on the shared retail foundation.",
+      "workflow": [
+        "Maintain store-specific catalog",
+        "Review stock and replenishment",
+        "Quote or check out customer purchases",
+        "Schedule, dispatch and acknowledge customer deliveries",
+        "Review collections and team access"
+      ],
+      "blocks": [
+        "inventory",
+        "retail-sales",
+        "retail-purchase",
+        "retail-accounting",
+        "activities",
+        "staff",
+        "documents",
+        "retail-pos",
+        "retail-credit",
+        "retail-loyalty",
+        "staff-shifts",
+        "delivery-fleet"
+      ],
+      "limits": "Variant SKUs, scheduled price rules, connected cashier checkout and included customer delivery dispatch with proof of handover. RFID and exchanges remain future work."
+    },
+    {
+      "id": "furniture-store",
+      "industryId": "retail",
+      "name": "Furniture store",
+      "headline": "Quotes, customer deposits and delivery",
+      "summary": "Quotes, customer deposits and delivery. Built on the shared retail foundation.",
+      "workflow": [
+        "Maintain store-specific catalog",
+        "Review stock and replenishment",
+        "Quote or check out customer purchases",
+        "Schedule, dispatch and acknowledge customer deliveries",
+        "Review collections and team access"
+      ],
+      "blocks": [
+        "inventory",
+        "retail-sales",
+        "retail-purchase",
+        "retail-accounting",
+        "activities",
+        "staff",
+        "documents",
+        "retail-pos",
+        "retail-credit",
+        "retail-loyalty",
+        "staff-shifts",
+        "delivery-fleet"
+      ],
+      "limits": "Quotations, reserved stock, deposits and included delivery dispatch with delivery acknowledgment. Sales-linked custom production remains future work."
+    },
+    {
+      "id": "grocery-store",
+      "industryId": "retail",
+      "name": "Grocery store",
+      "headline": "Fractional quantities and packaging barcodes",
+      "summary": "Fractional quantities and packaging barcodes. Built on the shared retail foundation.",
+      "workflow": [
+        "Maintain store-specific catalog",
+        "Review stock and replenishment",
+        "Quote or check out customer purchases",
+        "Review collections and team access"
+      ],
+      "blocks": [
+        "inventory",
+        "retail-sales",
+        "retail-purchase",
+        "retail-accounting",
+        "activities",
+        "staff",
+        "documents",
+        "retail-pos",
+        "retail-credit",
+        "retail-loyalty",
+        "staff-shifts"
+      ],
+      "limits": "Decimal quantities, packaging codes, lot expiry and FEFO allocation. Weighing scale hardware and offline checkout remain future work."
+    },
+    {
+      "id": "hardware-store",
+      "industryId": "retail",
+      "name": "Hardware store",
+      "headline": "Measured stock, contractor orders and delivery",
+      "summary": "Measured stock, contractor orders and delivery dispatch. Built on the shared retail foundation.",
+      "workflow": [
+        "Maintain store-specific catalog",
+        "Review stock and replenishment",
+        "Quote or check out customer purchases",
+        "Schedule, dispatch and acknowledge customer deliveries",
+        "Review collections and team access"
+      ],
+      "blocks": [
+        "inventory",
+        "retail-sales",
+        "retail-purchase",
+        "retail-accounting",
+        "activities",
+        "staff",
+        "documents",
+        "retail-pos",
+        "retail-credit",
+        "retail-loyalty",
+        "staff-shifts",
+        "delivery-fleet"
+      ],
+      "limits": "Decimal quantities, packaging, quotes and included delivery dispatch with load handling and delivery acknowledgment. Serial warranties and hardware integrations remain future work."
+    },
+    {
+      "id": "toy-store",
+      "industryId": "retail",
+      "name": "Toy store",
+      "headline": "Product families and age-range metadata",
+      "summary": "Product families and age-range metadata. Built on the shared retail foundation.",
+      "workflow": [
+        "Maintain store-specific catalog",
+        "Review stock and replenishment",
+        "Quote or check out customer purchases",
+        "Review collections and team access"
+      ],
+      "blocks": [
+        "inventory",
+        "retail-sales",
+        "retail-purchase",
+        "retail-accounting",
+        "activities",
+        "staff",
+        "documents",
+        "retail-pos",
+        "retail-credit",
+        "retail-loyalty",
+        "staff-shifts"
+      ],
+      "limits": "Toy metadata and online checkout. Gift cards, loyalty and online shopping remain future work."
+    }
+  ],
+  "counterWorkflows": [
+    {
+      "id": "retail",
+      "staple": true,
+      "name": "Retail checkout",
+      "industryIds": [
+        "retail"
+      ],
+      "recommendedTemplateId": "retail",
+      "requiredBlocks": [
+        "inventory",
+        "retail-sales",
+        "retail-accounting",
+        "retail-pos"
+      ],
+      "capability": "retail_checkout",
+      "mode": "retail",
+      "route": "/pos",
+      "status": "ready"
+    },
+    {
+      "id": "hotel",
+      "name": "Hotel & short-stay front desk",
+      "industryIds": [
+        "real-estate"
+      ],
+      "recommendedTemplateId": "property-management",
+      "requiredBlocks": [
+        "stays",
+        "property-finance"
+      ],
+      "capability": "property_checkout",
+      "mode": "hotel",
+      "route": "/pos",
+      "status": "ready"
+    },
+    {
+      "id": "lease-collections",
+      "name": "Long-term lease collections",
+      "industryIds": [
+        "real-estate"
+      ],
+      "recommendedTemplateId": "property-management",
+      "requiredBlocks": [
+        "rentals",
+        "property-finance"
+      ],
+      "capability": "property_checkout",
+      "mode": "real-estate",
+      "route": "/pos",
+      "status": "ready"
+    },
+    {
+      "id": "water-refilling",
+      "name": "Water refilling station",
+      "industryIds": [
+        "retail"
+      ],
+      "recommendedTemplateId": "retail",
+      "requiredBlocks": [
+        "inventory",
+        "retail-sales",
+        "retail-accounting",
+        "retail-pos",
+        "water-containers"
+      ],
+      "capability": "retail_checkout",
+      "mode": "retail",
+      "route": "/pos",
+      "status": "planned"
+    },
+    {
+      "id": "boarding-reception",
+      "name": "Boarding house reception",
+      "industryIds": [
+        "real-estate"
+      ],
+      "recommendedTemplateId": "property-management",
+      "requiredBlocks": [
+        "rentals",
+        "property-finance",
+        "boarding-reception"
+      ],
+      "capability": "property_checkout",
+      "mode": "real-estate",
+      "route": "/pos",
+      "status": "planned"
+    },
+    {
+      "id": "salon",
+      "name": "Salon & barbershop",
+      "industryIds": [
+        "professional-services"
+      ],
+      "recommendedTemplateId": "professional-services",
+      "requiredBlocks": [
+        "services",
+        "salon"
+      ],
+      "capability": "service_reception",
+      "mode": "professional-services",
+      "route": "/pos",
+      "status": "planned"
+    },
+    {
+      "id": "laundry",
+      "specialistKind": "laundry",
+      "staple": true,
+      "name": "Laundry front desk · pricing & collection",
+      "industryIds": [
+        "professional-services"
+      ],
+      "recommendedTemplateId": "laundry-shop",
+      "requiredBlocks": [
+        "services",
+        "laundry-custody"
+      ],
+      "capability": "operations",
+      "mode": "specialist",
+      "route": "/pos/desks/laundry",
+      "status": "ready"
+    },
+    {
+      "id": "food-counter",
+      "staple": true,
+      "name": "Restaurant & cafe counter",
+      "industryIds": [
+        "food-hospitality"
+      ],
+      "recommendedTemplateId": "food-hospitality",
+      "requiredBlocks": [
+        "food"
+      ],
+      "capability": "food_checkout",
+      "mode": "food-hospitality",
+      "route": "/pos",
+      "status": "ready"
+    },
+    {
+      "id": "auto-repair",
+      "name": "Auto repair service desk",
+      "industryIds": [
+        "trades"
+      ],
+      "recommendedTemplateId": "trades",
+      "requiredBlocks": [
+        "trades",
+        "inventory",
+        "auto-repair"
+      ],
+      "capability": "trade_reception",
+      "mode": "trades",
+      "route": "/pos",
+      "status": "planned"
+    },
+    {
+      "id": "services-reception",
+      "name": "Services & contracting reception",
+      "industryIds": [
+        "professional-services",
+        "trades",
+        "real-estate"
+      ],
+      "recommendedTemplateId": "trades",
+      "requiredBlocks": [
+        "trades",
+        "commercial"
+      ],
+      "capability": "trade_reception",
+      "mode": "trades",
+      "route": "/pos",
+      "status": "planned"
+    },
+    {
+      "id": "water-desk",
+      "specialistKind": "water-refilling",
+      "name": "Water refilling POS · sales & custody",
+      "industryIds": [
+        "retail"
+      ],
+      "recommendedTemplateId": "retail",
+      "requiredBlocks": [
+        "inventory",
+        "retail-sales",
+        "retail-accounting",
+        "retail-pos",
+        "water-custody"
+      ],
+      "capability": "retail_checkout",
+      "mode": "retail",
+      "route": "/pos/desks/water-refilling",
+      "status": "ready"
+    },
+    {
+      "id": "salon-desk",
+      "specialistKind": "salon",
+      "name": "Salon front desk · appointments",
+      "industryIds": [
+        "professional-services"
+      ],
+      "recommendedTemplateId": "professional-services",
+      "requiredBlocks": [
+        "services",
+        "salon-appointments"
+      ],
+      "capability": "operations",
+      "mode": "specialist",
+      "route": "/pos/desks/salon",
+      "status": "ready"
+    },
+    {
+      "id": "food-desk",
+      "specialistKind": "food-beverage",
+      "name": "Food front desk · takeaway pickup",
+      "industryIds": [
+        "food-hospitality"
+      ],
+      "recommendedTemplateId": "food-hospitality",
+      "requiredBlocks": [
+        "food",
+        "food-pickup"
+      ],
+      "capability": "operations",
+      "mode": "specialist",
+      "route": "/pos/desks/food-beverage",
+      "status": "ready"
+    },
+    {
+      "id": "auto-desk",
+      "specialistKind": "auto-repair",
+      "name": "Auto repair front desk · intake & release",
+      "industryIds": [
+        "trades"
+      ],
+      "recommendedTemplateId": "trades",
+      "requiredBlocks": [
+        "trades",
+        "inventory",
+        "auto-intake"
+      ],
+      "capability": "operations",
+      "mode": "specialist",
+      "route": "/pos/desks/auto-repair",
+      "status": "ready"
+    },
+    {
+      "id": "retail-desk",
+      "specialistKind": "retail-store",
+      "name": "Retail store POS · sales & packing",
+      "industryIds": [
+        "retail"
+      ],
+      "recommendedTemplateId": "retail",
+      "requiredBlocks": [
+        "inventory",
+        "retail-sales",
+        "retail-accounting",
+        "retail-pos",
+        "retail-handover"
+      ],
+      "capability": "retail_checkout",
+      "mode": "retail",
+      "route": "/pos/desks/retail-store",
+      "status": "ready"
+    },
+    {
+      "id": "services-desk",
+      "specialistKind": "services-contracting",
+      "name": "Services front desk · site dispatch",
+      "industryIds": [
+        "trades",
+        "professional-services"
+      ],
+      "recommendedTemplateId": "trades",
+      "requiredBlocks": [
+        "service-visits"
+      ],
+      "capability": "operations",
+      "mode": "specialist",
+      "route": "/pos/desks/services-contracting",
+      "status": "ready"
+    }
+  ],
+  "packageFamilies": [
+    {
+      "id": "retail",
+      "name": "Retail packages",
+      "description": "Retail and SME business specializations using shared ERP foundations."
+    },
+    {
+      "id": "real-estate",
+      "name": "Real estate packages",
+      "description": "Property management and accommodation business specializations."
+    },
+    {
+      "id": "other",
+      "name": "Specialized operations packages",
+      "description": "Vertical packs for businesses outside the property and retail foundations."
+    },
+    {
+      "id": "human-resources",
+      "name": "HRIS packages",
+      "description": "People, workforce and payroll packages using BizERP shared identity, audit and finance controls."
+    }
+  ],
+  "specializations": [
+    {
+      "id": "pure-hris",
+      "packageFamilyId": "human-resources",
+      "name": "Pure HRIS",
+      "defaultIndustryId": "human-resources",
+      "defaultTemplateId": "pure-hris",
+      "compatibleIndustryIds": [
+        "human-resources"
+      ],
+      "requiredBlocks": [
+        "staff",
+        "workforce",
+        "payroll"
+      ],
+      "recommendedBlocks": [
+        "staff",
+        "workforce",
+        "payroll",
+        "financial-reports",
+        "documents"
+      ],
+      "guideIndustryIds": [],
+      "counterAvailability": "Employee records, attendance, leave, HR calendar, shifts, payroll review, payouts, remittances and payslips use the existing BizERP HRIS modules. Operations and sales blocks are not included."
+    },
+    {
+      "id": "sari-sari",
+      "packageFamilyId": "retail",
+      "name": "Sari-sari store",
+      "defaultIndustryId": "retail",
+      "defaultTemplateId": "grocery-store",
+      "compatibleIndustryIds": [
+        "retail"
+      ],
+      "requiredBlocks": [
+        "inventory",
+        "retail-pos",
+        "retail-credit",
+        "retail-loyalty",
+        "contacts",
+        "staff"
+      ],
+      "recommendedBlocks": [
+        "inventory",
+        "retail-sales",
+        "retail-purchase",
+        "retail-accounting",
+        "retail-pos",
+        "retail-credit",
+        "retail-loyalty",
+        "retail-handover",
+        "operations-calendar",
+        "contacts",
+        "staff",
+        "staff-shifts"
+      ],
+      "guideIndustryIds": [
+        "retail"
+      ],
+      "counterAvailability": "Sari-sari staples, tingi packaging, utang and suki rewards use the Retail register. Price history and cost/markup pricing are available; fiscal certification and offline cloud sync remain separate work."
+    },
+    {
+      "id": "water-refilling",
+      "packageFamilyId": "retail",
+      "name": "Water Refilling",
+      "defaultIndustryId": "retail",
+      "defaultTemplateId": "retail",
+      "compatibleIndustryIds": [
+        "retail"
+      ],
+      "requiredBlocks": [
+        "inventory",
+        "retail-pos",
+        "water-custody",
+        "delivery-fleet",
+        "contacts",
+        "staff",
+        "retail-credit",
+        "retail-loyalty",
+        "staff-shifts"
+      ],
+      "recommendedBlocks": [
+        "inventory",
+        "retail-sales",
+        "retail-purchase",
+        "retail-accounting",
+        "activities",
+        "staff",
+        "documents",
+        "retail-pos",
+        "water-custody",
+        "delivery-fleet",
+        "retail-credit",
+        "retail-loyalty",
+        "contacts",
+        "staff-shifts"
+      ],
+      "guideIndustryIds": [
+        "retail"
+      ],
+      "counterAvailability": "Water checkout includes container custody and Delivery Fleet with independently reviewed collection evidence. Fleet does not automatically post money, stock or custody."
+    },
+    {
+      "id": "boarding-house",
+      "packageFamilyId": "real-estate",
+      "name": "Boarding House",
+      "defaultIndustryId": "real-estate",
+      "defaultTemplateId": "property-management",
+      "compatibleIndustryIds": [
+        "real-estate"
+      ],
+      "requiredBlocks": [
+        "rentals",
+        "property-finance"
+      ],
+      "recommendedBlocks": [
+        "properties",
+        "rentals",
+        "property-finance",
+        "maintenance",
+        "planning",
+        "documents",
+        "staff",
+        "crm"
+      ],
+      "guideIndustryIds": [
+        "real-estate"
+      ],
+      "counterAvailability": "Monthly lease collections are available. Unified boarding reception and collector reconciliation remain planned."
+    },
+    {
+      "id": "salon",
+      "packageFamilyId": "retail",
+      "name": "Salon / Barbershop",
+      "defaultIndustryId": "professional-services",
+      "defaultTemplateId": "professional-services",
+      "compatibleIndustryIds": [
+        "professional-services"
+      ],
+      "requiredBlocks": [
+        "services",
+        "retail-credit",
+        "retail-loyalty",
+        "contacts",
+        "staff",
+        "staff-shifts"
+      ],
+      "recommendedBlocks": [
+        "services",
+        "documents",
+        "activities",
+        "inventory",
+        "retail-credit",
+        "retail-loyalty",
+        "contacts",
+        "staff",
+        "staff-shifts"
+      ],
+      "guideIndustryIds": [
+        "professional-services"
+      ],
+      "counterAvailability": "Optional staff/seat appointments, a service catalog, personnel assignment, visit progress and commission tracking are available. Service billing remains separate; salon checkout, phase planning and payroll disbursement remain planned."
+    },
+    {
+      "id": "food-beverage",
+      "packageFamilyId": "retail",
+      "name": "Food & Beverage",
+      "defaultIndustryId": "food-hospitality",
+      "defaultTemplateId": "food-hospitality",
+      "compatibleIndustryIds": [
+        "food-hospitality"
+      ],
+      "requiredBlocks": [
+        "food",
+        "staff"
+      ],
+      "recommendedBlocks": [
+        "food",
+        "inventory",
+        "food-inventory",
+        "staff",
+        "activities",
+        "contacts",
+        "staff-shifts"
+      ],
+      "guideIndustryIds": [
+        "food-hospitality"
+      ],
+      "counterAvailability": "Food counter POS supports Pay Before Prep and Prep Before Pay, optional table tags, dine-in/takeaway, kitchen statuses, Food invoices and manual tenders. Recipe ingredients deduct when preparation starts when Kitchen Inventory and a recipe are configured. Dedicated POS login, online ordering, printer integration, reservations and payment gateways remain planned."
+    },
+    {
+      "id": "laundry",
+      "packageFamilyId": "retail",
+      "name": "Laundry",
+      "defaultIndustryId": "professional-services",
+      "defaultTemplateId": "laundry-shop",
+      "compatibleIndustryIds": [
+        "professional-services"
+      ],
+      "requiredBlocks": [
+        "services",
+        "retail-credit",
+        "retail-loyalty",
+        "contacts",
+        "staff",
+        "staff-shifts"
+      ],
+      "recommendedBlocks": [
+        "services",
+        "laundry-custody",
+        "documents",
+        "activities",
+        "inventory",
+        "retail-credit",
+        "retail-loyalty",
+        "contacts",
+        "staff",
+        "staff-shifts"
+      ],
+      "guideIndustryIds": [
+        "professional-services"
+      ],
+      "counterAvailability": "Laundry counter supports a service price list, mixed kg/piece ticket lines, cash/GCash/Maya/card tenders, receipts, cash sessions and payment-gated bag release. SMS, rider delivery, garment tags and offline mode remain planned."
+    },
+    {
+      "id": "auto-repair",
+      "packageFamilyId": "retail",
+      "name": "Auto Repair",
+      "defaultIndustryId": "trades",
+      "defaultTemplateId": "trades",
+      "compatibleIndustryIds": [
+        "trades"
+      ],
+      "requiredBlocks": [
+        "trades",
+        "inventory",
+        "retail-credit",
+        "retail-loyalty",
+        "contacts",
+        "staff",
+        "staff-shifts"
+      ],
+      "recommendedBlocks": [
+        "trades",
+        "inventory",
+        "activities",
+        "retail-credit",
+        "retail-loyalty",
+        "contacts",
+        "staff",
+        "staff-shifts"
+      ],
+      "guideIndustryIds": [
+        "trades"
+      ],
+      "counterAvailability": "Jobs, billing and optional vehicle intake, work-authorization evidence, QC and operational release are available. Item-level authorizations, bay planning and specialist checkout remain planned."
+    },
+    {
+      "id": "retail-store",
+      "packageFamilyId": "retail",
+      "name": "Retail Store",
+      "defaultIndustryId": "retail",
+      "defaultTemplateId": "retail",
+      "compatibleIndustryIds": [
+        "retail"
+      ],
+      "requiredBlocks": [
+        "inventory",
+        "retail-pos",
+        "retail-credit",
+        "retail-loyalty",
+        "contacts",
+        "staff",
+        "staff-shifts"
+      ],
+      "recommendedBlocks": [
+        "inventory",
+        "retail-sales",
+        "retail-purchase",
+        "retail-accounting",
+        "activities",
+        "staff",
+        "documents",
+        "retail-pos",
+        "retail-credit",
+        "retail-loyalty",
+        "contacts",
+        "staff-shifts"
+      ],
+      "guideIndustryIds": [
+        "retail"
+      ],
+      "counterAvailability": "Retail checkout, the native Android retail app and optional order pick/pack/handover evidence are available. Payments remain manually confirmed; physical peripherals need validation."
+    },
+    {
+      "id": "services-contracting",
+      "packageFamilyId": "retail",
+      "name": "Services & Contracting",
+      "defaultIndustryId": "trades",
+      "defaultTemplateId": "trades",
+      "compatibleIndustryIds": [
+        "trades",
+        "professional-services"
+      ],
+      "requiredBlocks": [
+        "retail-credit",
+        "retail-loyalty",
+        "contacts",
+        "staff",
+        "staff-shifts"
+      ],
+      "recommendedBlocks": [
+        "trades",
+        "inventory",
+        "activities",
+        "services",
+        "documents",
+        "retail-credit",
+        "retail-loyalty",
+        "contacts",
+        "staff",
+        "staff-shifts"
+      ],
+      "guideIndustryIds": [
+        "trades",
+        "professional-services"
+      ],
+      "counterAvailability": "Quotes, work evidence, billing and optional staff/site visits are available. Unified reception checkout, variations and construction billing need further work."
+    },
+    {
+      "id": "daily-rentals",
+      "packageFamilyId": "other",
+      "name": "Daily rentals",
+      "defaultIndustryId": "other",
+      "defaultTemplateId": "rental-operations",
+      "compatibleIndustryIds": [
+        "other",
+        "retail",
+        "trades"
+      ],
+      "requiredBlocks": [
+        "daily-rentals",
+        "contacts",
+        "staff"
+      ],
+      "recommendedBlocks": [
+        "daily-rentals",
+        "contacts",
+        "staff",
+        "activities",
+        "documents",
+        "financial-reports",
+        "inventory"
+      ],
+      "guideIndustryIds": [
+        "other"
+      ],
+      "counterAvailability": "Daily rentals use the availability-aware booking desk. Deposits are recorded on the booking; invoices, payments and deposit application stay in existing finance workflows."
+    },
+    {
+      "id": "retail-pharmacy",
+      "packageFamilyId": "retail",
+      "name": "Pharmacy",
+      "defaultIndustryId": "retail",
+      "defaultTemplateId": "retail",
+      "compatibleIndustryIds": [
+        "retail"
+      ],
+      "requiredBlocks": [
+        "retail-pharmacy",
+        "inventory",
+        "contacts",
+        "retail-sales",
+        "retail-purchase",
+        "retail-pos",
+        "staff",
+        "staff-shifts"
+      ],
+      "recommendedBlocks": [
+        "retail-accounting",
+        "activities",
+        "staff",
+        "staff-shifts"
+      ],
+      "guideIndustryIds": [
+        "retail"
+      ],
+      "counterAvailability": "Shared Retail counter with pharmacist-reviewed prescriptions, lot expiry and partial dispensing. Prescription uploads are placeholders. Controlled drugs are not supported."
+    }
+  ]
+}
