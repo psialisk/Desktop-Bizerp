@@ -28,6 +28,8 @@ function staffNavigationAllows(path, blocks, permissions, role, workflowPermissi
         return false;
     if (['/dashboard/license', '/dashboard/subscription', '/dashboard/desktop-reports', '/dashboard/downloads', '/dashboard/hr/staff', '/dashboard/hr/roles'].includes(path))
         return role === 'owner';
+    if (path.startsWith('/dashboard/spa') && workflowPermissions?.['business.spa'] !== undefined)
+        return ['view', 'edit'].includes(workflowPermissions['business.spa']);
     if ((path.startsWith('/dashboard/fitness') || path.startsWith('/dashboard/pickleball')) && workflowPermissions?.['business.fitness'] !== undefined)
         return ['view', 'edit'].includes(workflowPermissions['business.fitness']);
     return (['/dashboard/profile', '/dashboard/my-work'].includes(path) || path.startsWith('/dashboard/my-work/')) || ['view', 'edit'].includes(permissions[(0, department_access_1.pageDepartment)(path)] || 'none');
@@ -52,6 +54,10 @@ function foundationAllows(path, blocks) {
         return foundation_catalog_json_1.default.industries.some(i => page === '/dashboard/help/' + i.id) || ['licensing', 'customer-accounts', 'delivery-fleet', 'specialist-operations'].includes(page.slice('/dashboard/help/'.length));
     if (/^\/dashboard\/renters\/[^/]+$/.test(page))
         return foundationAllows('/dashboard/renters', blocks);
+    // Billing is platform-level: every tenant can reach the Subscription Hub sub-pages
+    // (plans, add-ons, orders, devices, history) regardless of its industry foundation.
+    if (page === '/dashboard/subscription' || page.startsWith('/dashboard/subscription/'))
+        return true;
     if (['/dashboard', '/dashboard/apps', '/dashboard/profile', '/dashboard/messages', '/dashboard/notifications', '/dashboard/help', '/dashboard/audit-logs', '/dashboard/license', '/dashboard/subscription', '/dashboard/desktop-reports', '/dashboard/downloads', '/dashboard/reports', '/dashboard/hr/roles', '/dashboard/hr/staff', '/renter-portal', '/renter-portal/account', '/renter-portal/help', '/renter-portal/more', '/renter-portal/messages', '/renter-portal/notifications'].includes(page))
         return true;
     if (page === '/dashboard/hotel-outlets')
@@ -60,6 +66,8 @@ function foundationAllows(path, blocks) {
         return blocks.includes('services');
     if (page === '/dashboard/client-access')
         return ['services', 'trades', 'association', 'fitness', 'pickleball'].some(b => blocks.includes(b)) || (blocks.includes('crm') && blocks.includes('properties'));
+    if (page === '/dashboard/spa')
+        return blocks.includes('spa');
     if (page === '/dashboard/pickleball')
         return blocks.includes('pickleball');
     if (page === '/dashboard/association-governance')

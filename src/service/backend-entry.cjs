@@ -2,6 +2,8 @@
 const path=require('node:path');
 const bundle=process.env.ERP_RUNTIME_ROOT;
 if(process.env.ERP_DEPLOYMENT_MODE!=='desktop'||!bundle||!process.env.DATABASE_URL_ERP?.startsWith('postgresql://'))throw Error('Explicit private desktop runtime configuration required');
+// Shared startup migrations resolve sql/ relative to the backend, never the private profile.
+process.chdir(path.join(bundle,'backend'));
 const load=p=>require(path.join(bundle,'backend/node_modules',p));
 console.log('Loading desktop backend modules');
 load('reflect-metadata');

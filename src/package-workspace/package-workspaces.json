@@ -147,10 +147,10 @@
     "feature": "trades"
   },
   "restaurant": {
-    "href": "/dashboard/food-pos",
-    "label": "Food Counter POS",
+    "href": "/dashboard/food",
+    "label": "Menu, tables & kitchen orders",
     "block": "food",
-    "feature": "food-pos"
+    "feature": "food"
   },
   "professional-services": {
     "href": "/dashboard/services",
@@ -175,7 +175,7 @@
   },
   "pickleball": {
     "href": "/dashboard/pickleball",
-    "label": "Pickleball \u00b7 courts & open play",
+    "label": "Pickleball · courts & open play",
     "block": "pickleball",
     "feature": "pickleball"
   },
@@ -202,5 +202,11 @@
     "label": "HR workspace",
     "block": "workforce",
     "feature": "hr"
+  },
+  "spa": {
+    "href": "/dashboard/spa",
+    "label": "Spa & Wellness",
+    "block": "spa",
+    "feature": "spa"
   }
 }

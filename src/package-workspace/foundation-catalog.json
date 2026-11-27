@@ -314,6 +314,21 @@
       ]
     },
     {
+      "id": "spa",
+      "name": "Spa & Wellness",
+      "description": "Therapist, treatment-room and equipment scheduling, reception, private intake and verified service checkout.",
+      "status": "ready",
+      "dependencies": [
+        "contacts",
+        "staff",
+        "staff-shifts",
+        "documents"
+      ],
+      "routes": [
+        "/dashboard/spa"
+      ]
+    },
+    {
       "id": "manufacturing",
       "name": "BOMs & production",
       "description": "BOMs, component consumption, finished stock and optional material-cost WIP posting.",
@@ -1164,6 +1179,23 @@
         "staff-shifts"
       ],
       "limits": "Toy metadata and online checkout. Gift cards, loyalty and online shopping remain future work."
+    },
+    {
+      "id": "spa",
+      "industryId": "health-fitness",
+      "name": "Spa & Wellness",
+      "headline": "Spa & Wellness",
+      "summary": "Coordinate treatments, therapists, rooms, reception and verified payments in one spa workspace.",
+      "workflow": [
+        "Set up treatments, rooms and working hours",
+        "Publish your spa for customer bookings",
+        "Welcome guests and record treatment progress",
+        "Verify cash or QR payments and issue receipts"
+      ],
+      "blocks": [
+        "spa"
+      ],
+      "limits": "Cloud Spa operations. Clinical procedures and native Spa workflows are not included."
     }
   ],
   "counterWorkflows": [
@@ -1859,6 +1891,26 @@
         "retail"
       ],
       "counterAvailability": "Shared Retail counter with pharmacist-reviewed prescriptions, lot expiry and partial dispensing. Prescription uploads are placeholders. Controlled drugs are not supported."
+    },
+    {
+      "id": "spa",
+      "packageFamilyId": "other",
+      "name": "Spa & Wellness",
+      "defaultIndustryId": "health-fitness",
+      "defaultTemplateId": "spa",
+      "compatibleIndustryIds": [
+        "health-fitness"
+      ],
+      "requiredBlocks": [
+        "spa"
+      ],
+      "recommendedBlocks": [
+        "spa"
+      ],
+      "guideIndustryIds": [
+        "health-fitness"
+      ],
+      "counterAvailability": "Included Spa reception, assigned therapist worklists and owner-enabled cashier collection in the cloud."
     }
   ]
 }

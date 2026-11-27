@@ -1,0 +1,3 @@
+const assert=require('node:assert/strict');
+const {credentialInput,authenticate}=require('../src/login-session.cjs');
+(async()=>{const input=credentialInput({mode:'network',kind:'customer',customerFoundation:'spa',email:'spa@fixture.invalid',password:'fixture'});assert.equal(input.customerFoundation,'spa');const calls=[];await authenticate('https://fixture.invalid/api',input,async u=>{calls.push(u);return new Response(JSON.stringify(u.endsWith('/login')?{accessToken:'fixture'}:{id:'consumer'}))});assert.deepEqual(calls,['https://fixture.invalid/api/customer-portal/login','https://fixture.invalid/api/customer-portal/me']);console.log('PASS Spa uses consumer identity, separate from property renter');})().catch(e=>{console.error(e);process.exitCode=1});

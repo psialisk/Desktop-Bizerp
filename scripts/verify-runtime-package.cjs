@@ -17,7 +17,9 @@ const DELTA_OBJECTS = {
   '129_fitness_reservation_billing.sql': ['fitness_payment_methods', 'fitness_payment_proofs'],
   '130_fitness_venue_profile.sql': ['fitness_venue_profiles', 'fitness_venue_posts'],
   '133_reports_analytics.sql': ['report_saved_views', 'report_export_jobs', 'report_execution_logs'],
-  '139_fitness_shared_venues_check_in.sql': ['fitness_venues']
+  '139_fitness_shared_venues_check_in.sql': ['fitness_venues'],
+  '141_spa_wellness.sql': ['spa_venues','spa_services','spa_appointments','spa_payment_proofs'],
+  '142_package_price_schedules.sql': ['package_price_schedules','package_price_schedule_audits']
 };
 
 const sha256 = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');

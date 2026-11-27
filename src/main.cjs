@@ -7,6 +7,7 @@ const {WorkspaceLogin}=require('./login-session.cjs');
 const {showMaximized}=require('./desktop-launch.cjs');
 const icon=path.resolve(__dirname,'../ui/icon.ico');
 const pkg=require('../package.json');
+require('./startup-profile.cjs').configureProfile(app);
 if(pkg.fullErp){const legacy=path.join(app.getPath('appData'),'Business ERP Water POC');app.setName('Business ERP Desktop');if(require('node:fs').existsSync(path.join(legacy,'store-data/secrets.bin')))app.setPath('userData',legacy);}else app.setName('Business ERP Water POC');
 const smoke=process.argv.includes('--smoke-test'),arg=process.argv.find(v=>v.startsWith('--smoke-root='));
 if(smoke&&arg){const requested=path.resolve(arg.slice(13));if(!requested.startsWith(path.resolve(os.tmpdir())+path.sep))throw Error('Smoke profile must be under the current user temporary directory');app.setPath('userData',requested);}

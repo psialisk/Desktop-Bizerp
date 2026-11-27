@@ -870,5 +870,21 @@
     "packageLineIds": [
       "pure-hris"
     ]
+  },
+  "spa": {
+    "packageFamilyId": "other",
+    "specializationId": "spa",
+    "industryId": "health-fitness",
+    "templateId": "spa",
+    "blocks": [
+      "core",
+      "contacts",
+      "documents",
+      "staff",
+      "staff-shifts",
+      "spa",
+      "reports-analytics"
+    ],
+    "workflowIds": []
   }
 }
