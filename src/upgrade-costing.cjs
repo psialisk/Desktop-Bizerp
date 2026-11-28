@@ -1,0 +1,5 @@
+const assert=require('node:assert/strict');
+const managed=new Set(['erp_inventory_settings','erp_inventory_values','erp_inventory_cost_layers','erp_inventory_cost_allocations','erp_inventory_cost_evidence','erp_inventory_cost_finalizations','erp_inventory_cost_commands','erp_inventory_landed_adjustments','erp_inventory_cost_reconciliations']);
+const capture=async c=>(await c.query('SELECT * FROM desktop_sync_tables ORDER BY table_name')).rows;
+async function verify(c,before){const after=await capture(c),old=new Map(before.map(r=>[r.table_name,r]));for(const r of before){const saved=after.find(x=>x.table_name===r.table_name);assert(saved,'Existing sync registry entry removed');assert.deepEqual(saved,managed.has(r.table_name)?{...r,cloud_only:true}:r,'Unexpected existing sync registry change: '+r.table_name);}for(const r of after)if(!old.has(r.table_name)){assert(managed.has(r.table_name)&&r.cloud_only===true&&Array.isArray(r.key_columns)&&r.key_columns.length,'Unexpected sync registry addition');}return true;}
+module.exports={capture,verify};

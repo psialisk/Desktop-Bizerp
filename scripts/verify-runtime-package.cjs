@@ -11,6 +11,9 @@ const crypto = require('node:crypto');
 // 120, 122-126 and 131-132 only alter or gate existing objects, so they are covered
 // by the hash check below rather than by a table assertion.
 const DELTA_OBJECTS = {
+  '144_inventory_costing.sql':['erp_inventory_cost_layers','erp_inventory_cost_allocations','erp_inventory_cost_evidence'],
+  '146_inventory_cost_documents.sql':['erp_inventory_cost_commands','erp_inventory_cost_finalizations'],
+  '147_desktop_cost_reconciliation.sql':['erp_inventory_cost_reconciliations'],
   '121_record_sync_derived_history.sql': ['desktop_sync_protocol'],
   '127_unified_license_management.sql': ['platform_license_operations', 'platform_license_device_controls', 'platform_license_configurations'],
   '128_fitness_courts_open_play.sql': ['fitness_courts', 'fitness_court_bookings', 'fitness_open_plays', 'fitness_open_play_attendees'],
@@ -99,6 +102,9 @@ for (const route of routes) {
   seen.add(route.fromHash);
   const file = path.join(runtime, route.file);
   if (!fs.existsSync(file)) { fail(label + ': migration file ' + route.file + ' is not shipped'); continue; }
+  if (/CREATE TABLE(?: IF NOT EXISTS)?\s+(?:public\.)?erp_inventory_cost_reconciliations\b/i.test(fs.readFileSync(file, 'utf8')) && route.costingExpansion !== 'inventory-costing-v1') {
+    fail(label + ': costingExpansion must be inventory-costing-v1 for the reviewed costing registry upgrade');
+  }
   const hash = sha256(file);
   if (hash !== String(route.migrationHash).toLowerCase()) {
     fail(label + ': migrationHash is stale - manifest ' + String(route.migrationHash).slice(0, 12) + ' but shipped ' + route.file + ' is ' + hash.slice(0, 12));

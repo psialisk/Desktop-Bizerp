@@ -70,16 +70,17 @@ async function upgradeStore(rt,options={}){
   rt.message('Recovery backup verified. Migrating restored copies of your local stores');
   const next=await prepareUpgrade({...old,lastUpgradeBackup:backupRoot},rt.manifest.schemaHash,async(mode)=>{
    const folder=path.join(backupRoot,mode),manifest=await verifyBackup(rt,folder,mode);
-   const original=await rt.client(old.databases[mode]);let before;const emailTrialPolicy=entry.emailTrialExpansion==='owner-email-trial-v1';
-   try{before=await fingerprint(original,undefined,{...(emailTrialPolicy?{users:['status','updated_at','email_verified_at']}:{}),...(entry.recordSyncExpansion?{roles:['permissions','updated_at']}:{} )});}finally{await original.end();}
+   const original=await rt.client(old.databases[mode]);let before,costingRegistry;const costingPolicy=entry.costingExpansion==='inventory-costing-v1';const emailTrialPolicy=entry.emailTrialExpansion==='owner-email-trial-v1';
+   try{if(costingPolicy)costingRegistry=await require('./upgrade-costing.cjs').capture(original);before=await fingerprint(original,undefined,{...(emailTrialPolicy?{users:['status','updated_at','email_verified_at']}:{}),...(entry.recordSyncExpansion?{roles:['permissions','updated_at']}:{} )});}finally{await original.end();}
    const waterPolicy=entry.auditExpansion==='water-fleet-standard-v1',accountPolicy=entry.auditExpansion==='retail-customer-accounts-v1',counterPolicy=entry.configExpansion==='counter-staples-103-105';let approvedBefore;
    if(waterPolicy||accountPolicy){const sourceClient=await rt.client(old.databases[mode]);try{approvedBefore=await require('./upgrade-water-fleet.cjs').captureWaterFleetUpgrade(sourceClient);}finally{await sourceClient.end();}}
    const database='store_'+mode+'_'+randomBytes(6).toString('hex');await rt.createDatabase(database);created.push(database);
    await rt.run(rt.bin('pg_restore'),['-h','127.0.0.1','-p',String(PORTS.database),'-U','gnj_app','-d',database,'--no-owner','--no-privileges','--exit-on-error',path.join(folder,'database.dump')],{PGPASSWORD:old.appPassword},120000);
    const clone=await rt.client(database);try{
     await require('./tenant-sync.cjs').installSchema(clone,await fs.readFile(sqlFile,'utf8'));
-    const after=await fingerprint(clone,before),businessRows=rows=>waterPolicy||accountPolicy||counterPolicy?rows.filter(t=>!['tenant_foundations','audit_logs'].includes(t.name)):rows;
-    if(JSON.stringify(businessRows(after))!==JSON.stringify(businessRows(before)))throw Error('Upgrade changed existing business records; original store and recovery backup retained');
+    if(costingPolicy)await require('./upgrade-costing.cjs').verify(clone,costingRegistry);
+    const after=await fingerprint(clone,before),businessRows=rows=>(costingPolicy?rows.filter(t=>t.name!=='desktop_sync_tables'):rows).filter(t=>!(waterPolicy||accountPolicy||counterPolicy)||!['tenant_foundations','audit_logs'].includes(t.name));
+    if(JSON.stringify(businessRows(after))!==JSON.stringify(businessRows(before)))throw Error('Upgrade changed existing business records ('+businessRows(after).filter((r,i)=>JSON.stringify(r)!==JSON.stringify(businessRows(before)[i])).map(r=>r.name).join(', ')+'); original store and recovery backup retained');
     if(counterPolicy)await require('./upgrade-counter-config.cjs').verifyCounterConfig(clone);
     if(waterPolicy)await require('./upgrade-water-fleet.cjs').verifyWaterFleetUpgrade(clone,approvedBefore);
     if(accountPolicy)await require('./upgrade-customer-accounts.cjs').verifyCustomerAccountsUpgrade(clone,approvedBefore,require(path.join(rt.bundle,'backend/dist/common/water-fleet-standard')).withWaterFleet);
