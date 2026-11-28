@@ -1,4 +1,7 @@
 const {randomUUID,createHash}=require('node:crypto');
+// One request guard per persistent workspace session: local sign-ins reuse the same
+// partition, so the guard reads a live flag instead of capturing each login.
+const readOnlyLocks=new WeakMap();
 const {networkTarget}=require('./network-window.cjs');
 function connection(raw,cloudApi='https://bizerp-gnj.onrender.com/api'){
  const url=new URL(networkTarget(raw,'owner'));if(url.hostname==='bizerpsme.shop')url.hostname='www.bizerpsme.shop';const origin=url.origin;
@@ -88,7 +91,7 @@ class WorkspaceLogin{
   wc.setWindowOpenHandler(()=>({action:'deny'}));
   const guard=(event,url)=>{try{if(new URL(url).origin!==target.origin)event.preventDefault();}catch{event.preventDefault();}};
   wc.on('will-navigate',guard);wc.on('will-redirect',guard);
-  if(local)wc.session.webRequest.onBeforeRequest((details,done)=>{let allow=false;try{const u=new URL(details.url);allow=u.origin===target.origin||['blob:','data:'].includes(u.protocol);if(allow&&input.readOnly===true&&!['GET','HEAD'].includes(String(details.method||'GET').toUpperCase())&&!u.pathname.endsWith('/auth/logout'))allow=false;}catch{}done({cancel:!allow});});
+  if(local){let lock=readOnlyLocks.get(wc.session);if(!lock){lock={readOnly:false};readOnlyLocks.set(wc.session,lock);wc.session.webRequest.onBeforeRequest((details,done)=>{let allow=false;try{const u=new URL(details.url);allow=u.origin===target.origin||['blob:','data:'].includes(u.protocol);if(allow&&lock.readOnly&&!['GET','HEAD'].includes(String(details.method||'GET').toUpperCase()))allow=false;}catch{}done({cancel:!allow});});}lock.readOnly=input.readOnly===true;}
   const load=url=>loadWorkspace(wc,url,target.origin);
   try{
    // The bootstrap page only establishes this isolated web origin; never receive credentials in a remote preload.
