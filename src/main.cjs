@@ -4,6 +4,8 @@ const {StoreRuntime}=require('./runtime.cjs');
 const {registerReceiptPrinting}=require('./electron-print.cjs');
 const {registerAppUpdates}=require('./app-updates-bridge.cjs');
 const {WorkspaceLogin}=require('./login-session.cjs');
+const loginReachability=require('./login-reachability.cjs');
+const loginPolicyStore=require('./login-policy-store.cjs');
 const {showMaximized}=require('./desktop-launch.cjs');
 const icon=path.resolve(__dirname,'../ui/icon.ico');
 const pkg=require('../package.json');
@@ -17,7 +19,12 @@ if(!app.requestSingleInstanceLock()){app.quit();}else{
  const dialogHost=()=>[...auxiliary.values()].find(w=>!w.isDestroyed()&&w.isVisible())||control;
  const root=path.join(app.getPath('userData'),'store-data'),bundle=app.isPackaged?path.join(process.resourcesPath,'runtime'):path.resolve(__dirname,'../bundle');
  const ui=pathToFileURL(path.resolve(__dirname,'../ui/index.html')).href;
- const status=()=>({...runtime?.status(),businessName:runtime?.v?.localBusiness?.businessName||'',packageId:runtime?.v?.localBusiness?.packageId,workflows:runtime?.manifest?require(path.join(bundle,'backend/dist/modules/foundation/catalog.json')).counterWorkflows.filter(w=>w.status==='ready'):[],busy,message,initialized,startupError});
+ let loginPolicyCache={lastOnlineAt:0,readOnly:false,paidUntil:0};
+ const reachability=loginReachability.createReachability();
+ const loginApi=()=>runtime?.manifest?.cloudApi||'https://bizerp-gnj.onrender.com/api';
+ const loginStatus=()=>{const probe=reachability.last(loginApi());const decision=loginReachability.localLoginDecision({reachable:probe.reachable,lastOnlineAt:loginPolicyCache.lastOnlineAt});const cached=loginReachability.cachedEntitlement({readOnly:loginPolicyCache.readOnly,paidUntil:loginPolicyCache.paidUntil,lastOnlineAt:loginPolicyCache.lastOnlineAt});return {checked:probe.checked,reachable:probe.reachable,lastOnlineAt:loginPolicyCache.lastOnlineAt||null,localAllowed:decision.allowed,localReason:decision.reason,cachedReadOnly:cached.readOnly,cachedReason:cached.reason};};
+ const refreshReachability=async force=>{try{await reachability.check(loginApi(),{force});}catch{}update();};
+ const status=()=>({...runtime?.status(),businessName:runtime?.v?.localBusiness?.businessName||'',packageId:runtime?.v?.localBusiness?.packageId,workflows:runtime?.manifest?require(path.join(bundle,'backend/dist/modules/foundation/catalog.json')).counterWorkflows.filter(w=>w.status==='ready'):[],busy,message,initialized,startupError,loginPolicy:loginStatus()});
  const trusted=event=>{const windows=[control,...auxiliary.values()];const window=windows.find(w=>w&&!w.isDestroyed()&&w.webContents===event.sender);if(!window||event.senderFrame!==window.webContents.mainFrame||!['', '#license','#tools','#recovery'].some(hash=>event.senderFrame.url===ui+hash))throw Error('Desktop operation denied');return window;};
  const update=()=>{for(const w of [control,...auxiliary.values()])if(w&&!w.isDestroyed())w.webContents.send('desktop:update',status());};
  const action=(fn,{requiresLocal=true,owner=false}={})=>async(event,...args)=>{trusted(event);if(busy)throw Error('Please wait: '+message);if(requiresLocal&&!initialized)throw Error('Local startup is unavailable: '+(startupError||message)+'. Network login is available.');if(owner)await login.authorizeOwner();busy=true;update();try{return await fn(...args);}finally{busy=false;update();}};
@@ -39,9 +46,19 @@ if(!app.requestSingleInstanceLock()){app.quit();}else{
   require('./cloud-team-bridge.cjs').registerCloudTeamBridge({ipcMain,shell:require('electron').shell,workspaces,getRuntime:()=>runtime,login});
   require('./cloud-signup.cjs').registerCloudSignup({ipcMain,BrowserWindow,shell:require('electron').shell,trusted,control});
   ipcMain.handle('desktop:sync:history',action(async()=>{const actor=await login.authorizeLocalUser();const c=await runtime.client(runtime.v.databases.live);try{return (await c.query('SELECT table_name,record_key,event_at,device_id,deleted,applied,record_data FROM desktop_sync_events WHERE tenant_id=$1 AND ($2::uuid IS NULL OR origin_actor_id=$2) ORDER BY sequence DESC LIMIT 100',[runtime.v.cloudBinding.tenantId,actor.role==='owner'?null:actor.id])).rows;}finally{await c.end();}}));
-  ipcMain.handle('desktop:sync:now',action(async()=>{await login.authorizeLocalUser();await require('./tenant-sync.cjs').synchronize(runtime);return runtime.syncSummary;}));
+  ipcMain.handle('desktop:sync:now',action(async()=>{await login.authorizeLocalUser();const current=loginStatus();if(current.cachedReadOnly)throw Error(current.cachedReason);await require('./tenant-sync.cjs').synchronize(runtime);return runtime.syncSummary;}));
   ipcMain.handle('desktop:status',event=>{trusted(event);return status();});
-  ipcMain.handle('desktop:login',action(async input=>{if(input?.mode==='local'&&(!initialized||runtime.upgradePending))throw Error('Local startup is unavailable: '+(startupError||message)+'. Network login remains available.');await login.login(input);return {signedIn:true};},{requiresLocal:false}));
+  ipcMain.handle('desktop:login',action(async input=>{
+  if(input?.mode==='local'){
+   if(!initialized||runtime.upgradePending)throw Error('Local startup is unavailable: '+(startupError||message)+'. Network login remains available.');
+   const reachable=await reachability.check(loginApi(),{force:true});update();
+   const decision=loginReachability.localLoginDecision({reachable,lastOnlineAt:loginPolicyCache.lastOnlineAt});
+   if(!decision.allowed)throw Error(decision.reason);const cachedLocal=loginReachability.cachedEntitlement({readOnly:loginPolicyCache.readOnly,paidUntil:loginPolicyCache.paidUntil,lastOnlineAt:loginPolicyCache.lastOnlineAt});input={...input,readOnly:cachedLocal.readOnly};;
+  }
+  await login.login(input);
+  if(input?.mode==='network'){const actor=login.active?.actor||{};loginPolicyCache=await loginPolicyStore.recordOnlineSignIn(root,{api:loginApi(),readOnly:actor.subscriptionReadOnly===true,paidUntil:actor.subscriptionPaidUntil||null});update();}
+  return {signedIn:true};
+},{requiresLocal:false}));
   ipcMain.handle('desktop:aux',action(openAuxiliary,{requiresLocal:false}));
   ipcMain.handle('desktop:copy',async(event,text)=>{trusted(event);if(typeof text!=='string'||text.length>65536)throw Error('Invalid copy text');clipboard.writeText(text);return true;});
   const onlyPage=(event,hash)=>{trusted(event);if(event.senderFrame.url!==ui+hash)throw Error('Desktop operation denied');};
@@ -63,7 +80,7 @@ if(!app.requestSingleInstanceLock()){app.quit();}else{
   ipcMain.handle('desktop:restore',action(async()=>{const selected=await dialog.showOpenDialog(dialogHost(),{title:'Select a matching store backup manifest',properties:['openFile','dontAddToRecent'],filters:[{name:'Backup manifest',extensions:['json']}]});if(selected.canceled||!await closeWorkspace())return null;const answer=await dialog.showMessageBox(dialogHost(),{type:'warning',buttons:['Cancel','Restore into a new database'],defaultId:0,cancelId:0,message:'Restore this backup?',detail:'The original database is retained. Sign in again afterward.'});if(answer.response!==1)return null;await runtime.restore(selected.filePaths[0]);return status();},{owner:true}));
   ipcMain.handle('desktop:cloud-restore',action(async()=>{const answer=await dialog.showMessageBox(dialogHost(),{type:'warning',buttons:['Cancel','Restore cloud backup'],defaultId:0,cancelId:0,message:'Restore the last verified cloud backup?',detail:'The newest backup verified by the cloud service is downloaded, decrypted with this PC\'s tenant key and restored into a new local database. Your current database is retained. If the backup uses an older schema, Back up and upgrade is required afterward.'});if(answer.response!==1)return null;if(!await closeWorkspace())return null;const result=await updatesBridge.restoreFromCloud();message=result.upgradeRequired?'Cloud backup restored. Choose Back up and upgrade to finish the schema.':'Cloud backup restored into a new database. Sign in again.';update();return result;},{owner:true}));
   tray=new Tray(nativeImage.createFromPath(path.resolve(__dirname,'../ui/icon.png')));tray.setToolTip('Business ERP');tray.setContextMenu(Menu.buildFromTemplate([{label:'Open Business ERP',click:()=>showMaximized(control)},{label:'Return to login',click:()=>closeWorkspace().catch(e=>dialog.showMessageBox(dialogHost(),{message:e.message}))},{label:'Updates & backup (owner)',click:()=>openAuxiliary('tools').catch(e=>dialog.showMessageBox(dialogHost(),{message:e.message}))},{label:'Local settings (owner)',click:()=>openAuxiliary('tools').catch(e=>dialog.showMessageBox(dialogHost(),{message:e.message}))},{label:'Exit and stop local business',click:()=>app.quit()}]));tray.on('double-click',()=>showMaximized(control));
-  await control.loadURL(ui);if(!smoke)showMaximized(control);
+  await control.loadURL(ui);loginPolicyCache=(await loginPolicyStore.read(root))||{lastOnlineAt:0,readOnly:false};void refreshReachability(true);if(!smoke)showMaximized(control);
   try{await runtime.initialize();initialized=true;if(runtime.upgradePending)message=runtime.upgradeEntry?'Choose Back up and upgrade or Backup only.':'Backup only is available, but this schema has no reviewed migration in this package. Contact support to add a safe path.';else if(runtime.v.databases.live)await runtime.start('live');else message='Connect to your network business to prepare this PC.';}catch(e){startupError=e.message;message='Local startup failed: '+e.message;}finally{busy=false;update();}
   if(smoke){const wait=Math.min(30000,Math.max(700,Number(process.argv.find(v=>v.startsWith('--smoke-wait='))?.split('=')[1])||700));await new Promise(resolve=>setTimeout(resolve,wait));await fs.writeFile(path.join(app.getPath('userData'),'electron-smoke.json'),JSON.stringify({status:status(),sandbox:true,contextIsolation:true,nodeIntegration:false}));await fs.writeFile(path.join(app.getPath('userData'),'electron-smoke.png'),(await control.webContents.capturePage()).toPNG());app.quit();}
  });

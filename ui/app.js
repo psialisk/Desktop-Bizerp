@@ -34,6 +34,7 @@ function render(s){current=s;renderSeed(s.localSeed);
  const busy=!!s.busy||pending;for(const button of document.querySelectorAll('button'))button.disabled=busy;
 
  if(page==='login'){
+  const loginPolicy=s.loginPolicy||{},policyChecked=loginPolicy.checked===true,serverReachable=loginPolicy.reachable===true,localAllowed=policyChecked&&!serverReachable&&loginPolicy.localAllowed===true;if(serverReachable||!policyChecked)network=true;
 
   $('forgotPassword').hidden=network||kind!=='owner'||!s.configured;
 
@@ -48,11 +49,11 @@ function render(s){current=s;renderSeed(s.localSeed);
 
   $('localBusiness').textContent=s.businessName||(s.configured?'Local business':'No local business created yet');
 
-  $('signIn').textContent=pending?'Signing in…':network?'Sign in to network':'Sign in locally';$('signIn').disabled=busy||!network&&!canLocal();
+  $('signIn').textContent=pending?'Signing in…':network?'Sign in to network':'Sign in locally';$('signIn').disabled=busy||!network&&(!localAllowed||!canLocal());
 
-  iconText($('connectionToggle'),network?'pc-display-horizontal':'wifi',network?'Use local mode':'Connect to Network');$('connectionToggle').setAttribute('aria-expanded',String(network));
+  iconText($('connectionToggle'),network?'pc-display-horizontal':'wifi',network?'Use local mode':'Connect to Network');$('connectionToggle').setAttribute('aria-expanded',String(network));$('connectionToggle').hidden=!policyChecked||serverReachable;
 
-  $('modeNote').textContent=network?'Network login opens the selected server workspace':'Works without internet';
+  $('modeNote').textContent=!policyChecked?'Checking whether the server is reachable…':serverReachable?'Server reachable: sign in with your online account':localAllowed?(loginPolicy.cachedReadOnly?(loginPolicy.cachedReason||'Local sign-in is read-only until you reconnect.'):'Works offline with the account saved on this PC'):(loginPolicy.localReason||'Local sign-in is unavailable.');
 
   $('runtimeStatus').textContent=network?(s.startupError?'Local startup is unavailable. Network sign-in is available.':''):(s.startupError?'Local startup: '+s.startupError:s.message||'');
 
@@ -135,7 +136,7 @@ for(const button of document.querySelectorAll('[data-kind]'))button.onclick=()=>
 
 $('workflow').onchange=()=>{workflowTouched=true;};
 
-$('connectionToggle').onclick=()=>{network=!network;localErpAddress=false;$('networkUrl').value='https://bizerpsme.shop';if(!network&&kind==='customer')kind='owner';$('password').value='';showError('');render(current);};
+$('connectionToggle').onclick=()=>{if(!network){const p=current.loginPolicy||{};if(p.checked&&p.reachable){showError('The server is reachable, so sign in online.');return;}if(!(p.checked&&!p.reachable&&p.localAllowed)){showError(p.localReason||'Local sign-in is not available yet.');return;}}network=!network;localErpAddress=false;$('networkUrl').value='https://bizerpsme.shop';if(!network&&kind==='customer')kind='owner';$('password').value='';showError('');render(current);};
 
 $('localErpToggle').onclick=()=>{if(localErpAddress){localErpAddress=false;$('networkUrl').value='https://bizerpsme.shop';}else{network=true;localErpAddress=true;$('networkUrl').value='';}$('password').value='';showError('');render(current);if(localErpAddress)$('networkUrl').focus();};
 
