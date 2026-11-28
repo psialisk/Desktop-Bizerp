@@ -1,4 +1,10 @@
 const {randomUUID,createHash}=require('node:crypto');
+/** True only for a mutating request to the local workspace while the cached session is read-only. */
+function readOnlyRequestBlocked({url,method,origin,readOnly}){
+ if(!readOnly)return false;
+ try{if(new URL(url).origin!==origin)return false;}catch{return false;}
+ return !['GET','HEAD'].includes(String(method||'GET').toUpperCase());
+}
 // One request guard per persistent workspace session: local sign-ins reuse the same
 // partition, so the guard reads a live flag instead of capturing each login.
 const readOnlyLocks=new WeakMap();
@@ -91,7 +97,7 @@ class WorkspaceLogin{
   wc.setWindowOpenHandler(()=>({action:'deny'}));
   const guard=(event,url)=>{try{if(new URL(url).origin!==target.origin)event.preventDefault();}catch{event.preventDefault();}};
   wc.on('will-navigate',guard);wc.on('will-redirect',guard);
-  if(local){let lock=readOnlyLocks.get(wc.session);if(!lock){lock={readOnly:false};readOnlyLocks.set(wc.session,lock);wc.session.webRequest.onBeforeRequest((details,done)=>{let allow=false;try{const u=new URL(details.url);allow=u.origin===target.origin||['blob:','data:'].includes(u.protocol);if(allow&&lock.readOnly&&!['GET','HEAD'].includes(String(details.method||'GET').toUpperCase()))allow=false;}catch{}done({cancel:!allow});});}lock.readOnly=input.readOnly===true;}
+  if(local){let lock=readOnlyLocks.get(wc.session);if(!lock){lock={readOnly:false};readOnlyLocks.set(wc.session,lock);wc.session.webRequest.onBeforeRequest((details,done)=>{let allow=false;try{const u=new URL(details.url);allow=u.origin===target.origin||['blob:','data:'].includes(u.protocol);if(allow&&readOnlyRequestBlocked({url:details.url,method:details.method,origin:target.origin,readOnly:lock.readOnly}))allow=false;}catch{}done({cancel:!allow});});}lock.readOnly=input.readOnly===true;}
   const load=url=>loadWorkspace(wc,url,target.origin);
   try{
    // The bootstrap page only establishes this isolated web origin; never receive credentials in a remote preload.
@@ -128,4 +134,4 @@ class WorkspaceLogin{
   const actor=await jsonRequest(entry.api,'/auth/staff/me',{token});if(actor.id!==entry.actor.id||actor.role!=='owner')throw Error('Local owner access required');return actor;
  }
 }
-module.exports={connection,credentialInput,authenticate,jsonRequest,ownerLanding,loadWorkspace,WorkspaceLogin,localSignInFailure};
+module.exports={connection,credentialInput,authenticate,jsonRequest,ownerLanding,loadWorkspace,WorkspaceLogin,localSignInFailure,readOnlyRequestBlocked};
